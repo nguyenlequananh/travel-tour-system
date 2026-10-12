@@ -1,0 +1,54 @@
+### =========================================================================
+### 1. TẠO ĐƠN ĐẶT TOUR MỚI CHO 2 HÀNH KHÁCH (POST)
+### - User ID: 3 (Khách hàng Lê Văn Khách)
+### - Departure ID: 4 (Chuyến Đà Lạt ngày 25/11/2026, còn 30 chỗ)
+### - Hành khách 1: Người lớn (ở phòng đơn +800k) = 4.5tr + 800k = 5.3tr
+### - Hành khách 2: Trẻ em = 2.25tr
+### - Áp mã: HE2024 (Giảm 10% tối đa 1tr)
+### =========================================================================
+POST http://localhost:8081/api/v1/admin/bookings
+Content-Type: application/json
+
+{
+  "userId": 3,
+  "departureId": 4,
+  "promotionCode": null,
+  "contactName": "Lê Văn Khách",
+  "contactPhone": "0987654321",
+  "contactEmail": "khachhang.le@gmail.com",
+  "contactAddress": "123 Điện Biên Phủ, Quận Bình Thạnh, TP.HCM",
+  "specialRequests": "Nhà có trẻ nhỏ, xin xếp ghế đầu xe gần tài xế",
+  "passengers": [
+    {
+      "fullName": "Lê Văn Khách",
+      "passengerType": "ADULT",
+      "gender": "MALE",
+      "birthDate": "1990-05-15",
+      "idCardOrPassport": "079090123456",
+      "requiresSingleRoom": true
+    },
+    {
+      "fullName": "Lê Bé Nhỏ",
+      "passengerType": "CHILD",
+      "gender": "FEMALE",
+      "birthDate": "2018-08-20",
+      "idCardOrPassport": "KHAISINH-1234",
+      "requiresSingleRoom": false
+    }
+  ]
+}
+
+### 2. XEM LẠI ĐƠN VỪA ĐẶT THEO ID (Ví dụ ID = 1)
+GET http://localhost:8081/api/v1/admin/bookings/1
+
+### 3. KIỂM TRA SỐ GHẾ TRONG KHO (Xem có bị trừ từ 30 xuống 28 không?)
+GET http://localhost:8081/api/v1/admin/departures/4
+
+### 4. CẬP NHẬT THANH TOÁN THÀNH PAID (ĐÃ NỘP TIỀN)
+PATCH http://localhost:8081/api/v1/admin/bookings/1/payment-status?status=PAID
+
+### 5. HỦY ĐƠN VÀ KIỂM TRA SỐ GHẾ CÓ ĐƯỢC CỘNG TRẢ LẠI 30 CHỖ KHÔNG
+PATCH http://localhost:8081/api/v1/admin/bookings/1/cancel
+
+### 6. KIỂM TRA LẠI KHO GHẾ SAU KHI HỦY
+GET http://localhost:8081/api/v1/admin/departures/4

@@ -1,0 +1,16 @@
+# Frontend (React)
+**/node_modules/
+**/dist/
+**/build/
+
+# Backend (Spring Boot / Maven)
+**/target/
+**/.mvn/
+**/*.jar
+**/*.class
+
+# VS Code & Hệ điều hành
+.vscode/
+.idea/
+*.DS_Store
+*.log
