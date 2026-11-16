@@ -1,8 +1,10 @@
 package com.travelhub.controller.admin;
 
+import com.travelhub.dto.request.CancellationFilterRequest;
 import com.travelhub.dto.request.CancellationRequest;
 import com.travelhub.dto.response.ApiResponse;
 import com.travelhub.dto.response.CancellationResponse;
+import com.travelhub.dto.response.PageResponse;
 import com.travelhub.service.BookingCancellationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +46,15 @@ public class AdminBookingCancellationController {
                 .status(200)
                 .message("Xác nhận hoàn tiền thành công")
                 .data(cancellationService.confirmRefund(id))
+                .build());
+    }
+    @GetMapping("/filter")
+    public ResponseEntity<ApiResponse<PageResponse<CancellationResponse>>> getCancellationsWithFilter(
+            CancellationFilterRequest request) {
+        return ResponseEntity.ok(ApiResponse.<PageResponse<CancellationResponse>>builder()
+                .status(200)
+                .message("Lấy danh sách yêu cầu hủy phân trang thành công")
+                .data(cancellationService.getCancellationsWithFilter(request))
                 .build());
     }
 }

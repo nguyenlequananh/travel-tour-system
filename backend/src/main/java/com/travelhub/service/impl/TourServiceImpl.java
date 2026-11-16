@@ -5,6 +5,11 @@ import com.travelhub.dto.request.TourFilterRequest;
 import com.travelhub.dto.request.TourUpdateRequest;
 import com.travelhub.dto.response.PageResponse;
 import com.travelhub.dto.response.TourAdminResponse;
+import com.travelhub.dto.response.TourDepartureResponse;
+import com.travelhub.dto.response.TourDetailResponse;
+import com.travelhub.dto.response.TourImageResponse;
+import com.travelhub.dto.response.TourItineraryResponse;
+import com.travelhub.dto.response.TourPolicyResponse;
 import com.travelhub.repository.TourRepository;
 
 import java.util.List;
@@ -19,6 +24,10 @@ import lombok.RequiredArgsConstructor;
 import com.travelhub.entity.Tour;
 import com.travelhub.entity.TourCategory;
 import com.travelhub.repository.TourCategoryRepository;
+import com.travelhub.repository.TourDepartureRepository;
+import com.travelhub.repository.TourImageRepository;
+import com.travelhub.repository.TourItineraryRepository;
+import com.travelhub.repository.TourPolicyRepository;
 import com.travelhub.enums.TourStatus;
 
 @Service
@@ -27,6 +36,11 @@ import com.travelhub.enums.TourStatus;
 public class TourServiceImpl implements TourService {
     private final TourRepository tourRepository;
     private final TourCategoryRepository tourCategoryRepository;
+
+    private final TourDepartureRepository departureRepository;
+    private final TourItineraryRepository itineraryRepository;
+    private final TourImageRepository imageRepository;
+    private final TourPolicyRepository policyRepository;
 
    @Override
    @Transactional(readOnly = true)
@@ -132,5 +146,38 @@ public class TourServiceImpl implements TourService {
     private Tour findTourEntityById(Long id) {
         return tourRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy tour với ID: " + id));
+    }
+
+     @Override
+    @Transactional(readOnly = true)
+    public TourDetailResponse getTourDetailById(Long id) {
+        // 1. Kiểm tra tour có tồn tại không
+        Tour tour = findTourEntityById(id);
+
+        // 2. Lấy danh sách các đợt đi, lịch trình, ảnh phụ và chính sách
+        List<TourDepartureResponse> departures = departureRepository.findAllByTourId(id).stream()
+                .map(TourDepartureResponse::fromEntity)
+                .toList();
+
+        List<TourItineraryResponse> itineraries = itineraryRepository.findAllByTourId(id).stream()
+                .map(TourItineraryResponse::fromEntity)
+                .toList();
+
+        List<TourImageResponse> images = imageRepository.findAllByTourId(id).stream()
+                .map(TourImageResponse::fromEntity)
+                .toList();
+
+        List<TourPolicyResponse> policies = policyRepository.findAllByTourId(id).stream()
+                .map(TourPolicyResponse::fromEntity)
+                .toList();
+
+        // 3. Đóng gói DTO hoàn chỉnh
+        return TourDetailResponse.builder()
+                .tour(TourAdminResponse.fromEntity(tour))
+                .departures(departures)
+                .itineraries(itineraries)
+                .images(images)
+                .policies(policies)
+                .build();
     }
 }

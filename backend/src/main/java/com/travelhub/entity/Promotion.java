@@ -13,7 +13,7 @@ import com.travelhub.enums.DiscountType;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Promotion {
+public class Promotion extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

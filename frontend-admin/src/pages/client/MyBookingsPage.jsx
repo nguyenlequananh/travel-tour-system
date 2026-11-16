@@ -1,31 +1,29 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Tag, Button, Modal, Form, Input, message, Space, Card, Empty, Spin } from 'antd';
-import { ShoppingOutlined, RollbackOutlined, UserOutlined } from '@ant-design/icons';
+import { Table, Tag, Button, Modal, Form, Input, message, Space, Card, Empty } from 'antd';
+import { ShoppingOutlined, RollbackOutlined, CreditCardOutlined, CalendarOutlined, TeamOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import axiosClient from '../../api/axiosClient';
+import bookingService from '../../services/bookingService';
+import paymentService from '../../services/paymentService';
+import { useAuth } from '../../context/AuthContext';
 
 const MyBookingsPage = () => {
+  const { user, isAuthenticated } = useAuth();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(false);
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
-  const [selectedBookingId, setSelectedBookingId] = useState(null);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [cancelling, setCancelling] = useState(false);
   const [cancelForm] = Form.useForm();
-  
-  // Lấy thông tin user đang đăng nhập từ localStorage
-  const savedUser = JSON.parse(localStorage.getItem('travel_user') || '{}');
 
-  // Tải danh sách đơn đặt của CHÍNH NGƯỜI ĐANG ĐĂNG NHẬP
   const fetchMyBookings = async () => {
-    // 1. Nếu chưa đăng nhập thì dừng lại, không gọi API
-    if (!savedUser.id) {
+    if (!user?.id) {
       setBookings([]);
       return;
     }
 
     setLoading(true);
     try {
-      // 2. GỌI ĐÚNG ID CỦA NGƯỜI ĐANG ĐĂNG NHẬP (KHÔNG CÒN SỐ 3 NỮA!)
-      const res = await axiosClient.get(`/bookings/my-bookings?userId=${savedUser.id}`);
+      const res = await bookingService.getMyBookings(user.id);
       setBookings(res.data || []);
     } catch (err) {
       message.error(err.message || 'Lỗi khi tải lịch sử vé!');
@@ -35,22 +33,48 @@ const MyBookingsPage = () => {
   };
 
   useEffect(() => {
-    fetchMyBookings();
-  }, []);
+    if (user?.id) {
+      fetchMyBookings();
+    }
+
+    // Tự động tải lại bảng vé khi nhận WebSocket thông báo từ Admin mà không cần F5 trang
+    const handleAutoReload = () => {
+      fetchMyBookings();
+    };
+    window.addEventListener('booking-status-updated', handleAutoReload);
+    return () => {
+      window.removeEventListener('booking-status-updated', handleAutoReload);
+    };
+  }, [user?.id]);
 
   // Gửi yêu cầu hủy vé
   const handleRequestCancel = async (values) => {
+    if (!selectedBooking) return;
+    setCancelling(true);
     try {
-      await axiosClient.post('/bookings/cancel', {
-        bookingId: selectedBookingId,
+      await bookingService.requestCancel({
+        bookingId: selectedBooking.id,
         reason: values.reason,
       });
-      message.success('Đã gửi yêu cầu hủy vé thành công!');
+      message.success('Đã gửi yêu cầu hủy vé thành công! Quản trị viên sẽ sớm xử lý.');
       setCancelModalOpen(false);
       cancelForm.resetFields();
-      fetchMyBookings(); // Tải lại danh sách sau khi hủy
+      fetchMyBookings();
     } catch (err) {
-      message.error(err.message || 'Không thể hủy vé này!');
+      message.error(err.message || 'Không thể gửi yêu cầu hủy vé!');
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  // Thanh toán VNPay
+  const handlePayWithVnPay = async (bookingId) => {
+    try {
+      message.loading({ content: 'Đang kết nối tới cổng thanh toán VNPay...', key: 'vnpay' });
+      const res = await paymentService.createVnPayUrl(bookingId);
+      window.location.href = res.data;
+    } catch (err) {
+      message.error({ content: err.message || 'Lỗi kết nối cổng thanh toán VNPay!', key: 'vnpay' });
     }
   };
 
@@ -59,64 +83,92 @@ const MyBookingsPage = () => {
       title: 'Mã Đơn',
       dataIndex: 'bookingCode',
       key: 'bookingCode',
-      render: (code) => <Tag color="blue">{code}</Tag>,
+      render: (code) => <Tag color="blue" style={{ fontWeight: 600 }}>{code}</Tag>,
     },
     {
-      title: 'Tên Tour',
+      title: 'Tên Chuyến Đi',
       dataIndex: 'tourName',
       key: 'tourName',
-      render: (text) => <strong>{text}</strong>,
+      render: (text) => <strong style={{ color: '#1f1f1f' }}>{text}</strong>,
     },
     {
-      title: 'Ngày khởi hành',
+      title: 'Khởi Hành',
       dataIndex: 'departureDate',
       key: 'departureDate',
-      render: (d) => dayjs(d).format('DD/MM/YYYY'),
+      render: (d) => (
+        <span>
+          <CalendarOutlined style={{ marginRight: 6, color: '#1677ff' }} />
+          {dayjs(d).format('DD/MM/YYYY')}
+        </span>
+      ),
     },
     {
-      title: 'Số người',
+      title: 'Số Khách',
       dataIndex: 'totalPassengers',
       key: 'totalPassengers',
-      render: (count) => `${count} khách`,
+      render: (count) => (
+        <span>
+          <TeamOutlined style={{ marginRight: 6, color: '#52c41a' }} />
+          {count} khách
+        </span>
+      ),
     },
     {
-      title: 'Tổng tiền',
+      title: 'Tổng Tiền',
       dataIndex: 'totalAmount',
       key: 'totalAmount',
-      render: (p) => <strong style={{ color: '#d4380d' }}>{Number(p).toLocaleString()} đ</strong>,
+      render: (p) => <strong style={{ color: '#d4380d', fontSize: 14 }}>{Number(p).toLocaleString('vi-VN')} đ</strong>,
     },
     {
-      title: 'Trạng thái vé',
+      title: 'Trạng Thái Vé',
       dataIndex: 'bookingStatus',
       key: 'bookingStatus',
-      render: (s) => (
-        <Tag color={s === 'CONFIRMED' ? 'green' : s === 'CANCELLED' ? 'red' : 'gold'}>
-          {s === 'CONFIRMED' ? 'Đã xác nhận' : s === 'CANCELLED' ? 'Đã hủy' : 'Chờ xử lý'}
-        </Tag>
-      ),
+      render: (s) => {
+        let color = 'gold';
+        let label = 'Chờ xử lý';
+        if (s === 'CONFIRMED') { color = 'green'; label = 'Đã xác nhận'; }
+        else if (s === 'CANCELLED') { color = 'red'; label = 'Đã hủy'; }
+        else if (s === 'COMPLETED') { color = 'blue'; label = 'Hoàn thành'; }
+        return <Tag color={color} style={{ fontWeight: 500 }}>{label}</Tag>;
+      },
     },
     {
-      title: 'Thanh toán',
+      title: 'Thanh Toán',
       dataIndex: 'paymentStatus',
       key: 'paymentStatus',
-      render: (p) => (
-        <Tag color={p === 'PAID' ? 'green' : p === 'REFUNDED' ? 'purple' : 'orange'}>
-          {p === 'PAID' ? 'Đã thanh toán' : p === 'REFUNDED' ? 'Đã hoàn tiền' : 'Chưa thanh toán'}
-        </Tag>
-      ),
+      render: (p) => {
+        let color = 'orange';
+        let label = 'Chưa thanh toán';
+        if (p === 'PAID') { color = 'green'; label = 'Đã thanh toán'; }
+        else if (p === 'DEPOSITED') { color = 'blue'; label = 'Đã đặt cọc'; }
+        else if (p === 'REFUNDED') { color = 'purple'; label = 'Đã hoàn tiền'; }
+        return <Tag color={color} style={{ fontWeight: 500 }}>{label}</Tag>;
+      },
     },
     {
-      title: 'Hành động',
+      title: 'Thao Tác',
       key: 'action',
       render: (_, record) => (
-        <Space>
-          {record.bookingStatus !== 'CANCELLED' && (
+        <Space size="small">
+          {record.paymentStatus === 'UNPAID' && record.bookingStatus !== 'CANCELLED' && (
+            <Button
+              type="primary"
+              size="small"
+              icon={<CreditCardOutlined />}
+              style={{ background: '#005baa', borderColor: '#005baa', fontWeight: 600 }}
+              onClick={() => handlePayWithVnPay(record.id)}
+            >
+              Thanh toán VNPay
+            </Button>
+          )}
+
+          {record.bookingStatus !== 'CANCELLED' && record.bookingStatus !== 'COMPLETED' && (
             <Button
               danger
               size="small"
               icon={<RollbackOutlined />}
               onClick={() => {
-                setSelectedBookingId(record.id);
+                setSelectedBooking(record);
                 setCancelModalOpen(true);
               }}
             >
@@ -128,14 +180,13 @@ const MyBookingsPage = () => {
     },
   ];
 
-  // Nếu chưa đăng nhập thì hiện giao diện nhắc đăng nhập
-  if (!savedUser.id) {
+  if (!isAuthenticated || !user?.id) {
     return (
       <div style={{ maxWidth: 800, margin: '60px auto', textAlign: 'center' }}>
-        <Card>
+        <Card style={{ borderRadius: 12, boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }}>
           <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description="Bạn chưa đăng nhập tài khoản. Vui lòng đăng nhập để xem danh sách vé của mình!"
+            description="Vui lòng đăng nhập để xem danh sách vé và quản lý đơn đặt tour của bạn!"
           />
         </Card>
       </div>
@@ -143,44 +194,69 @@ const MyBookingsPage = () => {
   }
 
   return (
-    <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+    <div style={{ maxWidth: 1160, margin: '0 auto' }}>
       <div style={{ marginBottom: 20 }}>
-        <h2><ShoppingOutlined style={{ marginRight: 8 }} /> Danh Sách Vé Du Lịch Của Tôi</h2>
-        <span style={{ color: '#888' }}>
-          Tài khoản: <b>{savedUser.fullName}</b> ({savedUser.email})
-        </span>
+        <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: '#1f1f1f' }}>
+          <ShoppingOutlined style={{ marginRight: 10, color: '#1677ff' }} />
+          Danh Sách Vé Du Lịch Của Tôi
+        </h2>
+        <p style={{ color: '#8c8c8c', marginTop: 4 }}>
+          Tài khoản: <b>{user.fullName || user.email}</b>
+        </p>
       </div>
 
-      <Card>
+      <Card style={{ borderRadius: 12, boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }}>
         <Table
           columns={columns}
           dataSource={bookings}
           rowKey="id"
           loading={loading}
           locale={{ emptyText: 'Bạn chưa đặt vé tour nào. Hãy dạo quanh trang chủ để chọn tour nhé!' }}
+          pagination={{
+            position: ['bottomCenter'],
+            pageSize: 8,
+            showTotal: (total) => `Tổng cộng ${total} đơn`,
+          }}
         />
       </Card>
 
       {/* POPUP NHẬP LÝ DO HỦY VÉ */}
       <Modal
-        title="Yêu Cầu Hủy Vé Tour"
+        title={
+          <span style={{ fontSize: 17, fontWeight: 600, color: '#ff4d4f' }}>
+            <RollbackOutlined style={{ marginRight: 8 }} />
+            Yêu Cầu Hủy Vé Tour — {selectedBooking?.bookingCode}
+          </span>
+        }
         open={cancelModalOpen}
         onCancel={() => setCancelModalOpen(false)}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form form={cancelForm} layout="vertical" onFinish={handleRequestCancel}>
-          <p style={{ color: '#888' }}>
-            Hệ thống sẽ tự động tính tỷ lệ phạt và tiền hoàn dựa trên số ngày còn lại đến ngày khởi hành theo đúng chính sách công ty.
-          </p>
-          <Form.Item name="reason" label="Lý do bạn muốn hủy tour" rules={[{ required: true, message: 'Vui lòng nhập lý do!' }]}>
-            <Input.TextArea rows={3} placeholder="VD: Bận việc gia đình đột xuất..." />
+          <div style={{ background: '#fffbe6', padding: '10px 14px', borderRadius: 6, border: '1px solid #ffe58f', marginBottom: 16, fontSize: 13, color: '#ad6800' }}>
+            💡 <b>Chính sách hoàn hủy của TravelHub:</b>
+            <ul style={{ margin: '6px 0 0 16px', padding: 0 }}>
+              <li>Hủy trước 15 ngày khởi hành: Hoàn tiền 100%.</li>
+              <li>Hủy trước 7 - 14 ngày: Phạt phí 30%, hoàn lại 70%.</li>
+              <li>Hủy trước 3 - 6 ngày: Phạt phí 70%, hoàn lại 30%.</li>
+              <li>Hủy dưới 3 ngày: Không hoàn tiền.</li>
+            </ul>
+          </div>
+
+          <Form.Item
+            name="reason"
+            label="Lý do hủy tour"
+            rules={[{ required: true, message: 'Vui lòng cung cấp lý do bạn muốn hủy vé!' }]}
+          >
+            <Input.TextArea rows={3} placeholder="Ví dụ: Có lịch công tác đột xuất, người thân bị ốm..." />
           </Form.Item>
-          <Form.Item style={{ textAlign: 'right', marginBottom: 0 }}>
+
+          <Form.Item style={{ textAlign: 'right', marginBottom: 0, marginTop: 16 }}>
             <Space>
               <Button onClick={() => setCancelModalOpen(false)}>Quay lại</Button>
-              <Button type="primary" danger htmlType="submit">
-                Xác Nhận Gửi Hủy
+              <Button type="primary" danger htmlType="submit" loading={cancelling}>
+                Xác Nhận Hủy Vé
               </Button>
             </Space>
           </Form.Item>

@@ -1,7 +1,9 @@
 package com.travelhub.service;
 
 import com.travelhub.dto.request.BookingCreateRequest;
+import com.travelhub.dto.request.BookingFilterRequest;
 import com.travelhub.dto.response.BookingResponse;
+import com.travelhub.dto.response.PageResponse;
 import com.travelhub.enums.BookingStatus;
 import com.travelhub.enums.PaymentStatus;
 
@@ -32,4 +34,6 @@ public interface BookingService {
 
     // 8. Hủy đơn đặt tour (Hoàn lại số ghế trống vào kho)
     void cancelBooking(Long id);
+
+    PageResponse<BookingResponse> getBookingsWithFilter(BookingFilterRequest request);
 }

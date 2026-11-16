@@ -1,7 +1,9 @@
 package com.travelhub.service;
 
 import com.travelhub.dto.request.CustomTourCreateRequest;
+import com.travelhub.dto.request.CustomTourFilterRequest;
 import com.travelhub.dto.response.CustomTourResponse;
+import com.travelhub.dto.response.PageResponse;
 import com.travelhub.enums.CustomTourStatus;
 
 import java.util.List;
@@ -14,4 +16,5 @@ public interface CustomTourService {
     List<CustomTourResponse> getAllRequests();
     CustomTourResponse getRequestById(Long id);
     CustomTourResponse updateStatus(Long id, CustomTourStatus status);
+    PageResponse<CustomTourResponse> getRequestsWithFilter(CustomTourFilterRequest request);
 }

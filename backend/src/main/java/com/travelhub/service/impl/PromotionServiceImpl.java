@@ -1,15 +1,20 @@
 package com.travelhub.service.impl;
+import com.travelhub.dto.request.PromotionFilterRequest;
 import com.travelhub.dto.request.PromotionRequest;
 import com.travelhub.entity.Promotion;
 import com.travelhub.repository.PromotionRepository;
 import com.travelhub.service.PromotionService;
 import org.springframework.transaction.annotation.Transactional; // <-- ĐÚNG LÀ CÁI NÀYimport lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+
+import com.travelhub.dto.response.PageResponse;
 import com.travelhub.dto.response.PromotionAdminResponse;
 @RequiredArgsConstructor
 @Service
@@ -94,4 +99,22 @@ public class PromotionServiceImpl implements PromotionService {
         }
         return PromotionAdminResponse.fromEntity(promotion);
     }
+    @Override
+@Transactional(readOnly = true)
+public PageResponse<PromotionAdminResponse> getPromotionsWithFilter(PromotionFilterRequest request) {
+    Pageable pageable = request.toPageable();
+    
+    String keyword = (request.getKeyword() != null && !request.getKeyword().trim().isEmpty())
+            ? request.getKeyword().trim()
+            : null;
+
+    Page<Promotion> promoPage = promotionRepository.filterPromotions(
+            keyword, 
+            request.getDiscountType(), 
+            request.getIsActive(), 
+            pageable
+    );
+
+    return PageResponse.fromPage(promoPage, PromotionAdminResponse::fromEntity);
+}
 }

@@ -5,48 +5,129 @@ import {
   Select,
   Button,
   Space,
-  Modal,
-  Descriptions,
   Popconfirm,
   message,
+  Input,
+  Card,
+  Row,
+  Col,
 } from 'antd';
 import {
   EyeOutlined,
   CloseCircleOutlined,
   ShoppingOutlined,
+  SearchOutlined,
+  ReloadOutlined,
 } from '@ant-design/icons';
+import { useSearchParams } from 'react-router-dom';
 import dayjs from 'dayjs';
-import axiosClient from '../api/axiosClient';
+import { bookingService } from '../services';
+import BookingDetailModal from '../components/BookingDetailModal';
 
 const BookingManagement = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [selectedBooking, setSelectedBooking] = useState(null); // Chi tiết đơn đang xem
+  const [selectedBooking, setSelectedBooking] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
-  // 1. Lấy tất cả đơn
+  // 1. ĐỌC TOÀN BỘ TIÊU CHÍ LỌC & PHÂN TRANG TỪ URL (Single Source of Truth)
+  const keywordFromUrl = searchParams.get('keyword') || '';
+  const bookingStatusFromUrl = searchParams.get('bookingStatus') || undefined;
+  const paymentStatusFromUrl = searchParams.get('paymentStatus') || undefined;
+  const pageParam = parseInt(searchParams.get('page') || '1', 10);
+  const currentPage = isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
+
+  // State điều khiển Form nhập
+  const [keyword, setKeyword] = useState(keywordFromUrl);
+  const [bookingStatus, setBookingStatus] = useState(bookingStatusFromUrl);
+  const [paymentStatus, setPaymentStatus] = useState(paymentStatusFromUrl);
+
+  // Phân trang từ Server
+  const [pagination, setPagination] = useState({
+    current: currentPage,
+    pageSize: 10,
+    total: 0,
+  });
+
+  // Tự động đồng bộ ngược lại các ô input khi URL thay đổi (Back / Forward / F5)
+  useEffect(() => {
+    setKeyword(keywordFromUrl);
+    setBookingStatus(bookingStatusFromUrl);
+    setPaymentStatus(paymentStatusFromUrl);
+  }, [keywordFromUrl, bookingStatusFromUrl, paymentStatusFromUrl]);
+
+  // 2. GỌI API LẤY DỮ LIỆU CÓ PHÂN TRANG VÀ LỌC TỪ SERVER DỰA TRÊN URL
   const fetchBookings = async () => {
     setLoading(true);
     try {
-      const res = await axiosClient.get('/admin/bookings');
-      setBookings(res.data || []);
+      const params = {
+        page: currentPage - 1,
+        size: pagination.pageSize,
+        sortBy: 'id',
+        order: 'DESC',
+        keyword: keywordFromUrl?.trim() || undefined,
+        bookingStatus: bookingStatusFromUrl || undefined,
+        paymentStatus: paymentStatusFromUrl || undefined,
+      };
+
+      const res = await bookingService.getAdminBookings(params);
+      const pageData = res.data;
+
+      setBookings(pageData.data || []);
+      setPagination((prev) => ({
+        ...prev,
+        current: pageData.pageNumber + 1,
+        pageSize: pageData.pageSize,
+        total: pageData.totalElements,
+      }));
     } catch (err) {
-      message.error(err.message);
+      message.error(err.message || 'Lỗi tải danh sách đơn hàng!');
     } finally {
       setLoading(false);
     }
   };
 
+  // Tự động tải lại khi URL (searchParams) thay đổi
   useEffect(() => {
     fetchBookings();
-  }, []);
+  }, [searchParams]);
+
+  // Bấm nút "Lọc": Đẩy toàn bộ tiêu chí lên URL
+  const handleSearch = () => {
+    const nextParams = new URLSearchParams();
+    if (keyword?.trim()) nextParams.set('keyword', keyword.trim());
+    if (bookingStatus) nextParams.set('bookingStatus', bookingStatus);
+    if (paymentStatus) nextParams.set('paymentStatus', paymentStatus);
+    // Áp dụng bộ lọc mới -> Trở về trang 1
+    setSearchParams(nextParams);
+  };
+
+  // Bấm nút "Làm mới": Xóa sạch tiêu chí và reset URL
+  const handleReset = () => {
+    setKeyword('');
+    setBookingStatus(undefined);
+    setPaymentStatus(undefined);
+    setSearchParams({});
+  };
+
+  // Chuyển trang: Cập nhật param page trên URL
+  const handleTableChange = (pagin) => {
+    const nextParams = new URLSearchParams(searchParams);
+    if (pagin.current > 1) {
+      nextParams.set('page', pagin.current.toString());
+    } else {
+      nextParams.delete('page');
+    }
+    setSearchParams(nextParams);
+  };
 
   // 2. Cập nhật trạng thái đơn (PENDING, CONFIRMED, COMPLETED, CANCELLED)
   const handleUpdateBookingStatus = async (id, status) => {
     try {
-      await axiosClient.patch(`/admin/bookings/${id}/status?status=${status}`);
+      await bookingService.updateStatus(id, status);
       message.success('Cập nhật trạng thái chuyến đi thành công!');
-      fetchBookings();
+      fetchBookings(pagination.current - 1, pagination.pageSize);
     } catch (err) {
       message.error(err.message);
     }
@@ -55,9 +136,9 @@ const BookingManagement = () => {
   // 3. Cập nhật trạng thái thanh toán (UNPAID, PAID, REFUNDED)
   const handleUpdatePaymentStatus = async (id, status) => {
     try {
-      await axiosClient.patch(`/admin/bookings/${id}/payment-status?status=${status}`);
+      await bookingService.updatePaymentStatus(id, status);
       message.success('Cập nhật trạng thái thanh toán thành công!');
-      fetchBookings();
+      fetchBookings(pagination.current - 1, pagination.pageSize);
     } catch (err) {
       message.error(err.message);
     }
@@ -66,9 +147,9 @@ const BookingManagement = () => {
   // 4. Hủy đơn đặt (Hoàn lại ghế vào kho)
   const handleCancelBooking = async (id) => {
     try {
-      await axiosClient.patch(`/admin/bookings/${id}/cancel`);
+      await bookingService.cancelBooking(id);
       message.success('Đã hủy đơn và hoàn trả ghế vào kho thành công!');
-      fetchBookings();
+      fetchBookings(pagination.current - 1, pagination.pageSize);
     } catch (err) {
       message.error(err.message);
     }
@@ -104,35 +185,44 @@ const BookingManagement = () => {
       ),
     },
     {
-      title: 'Số khách',
+      title: 'Số vé',
       dataIndex: 'totalPassengers',
       key: 'totalPassengers',
-      render: (count) => <Tag color="cyan">{count} khách</Tag>,
+      align: 'center',
+      render: (count) => <span>{count} vé</span>,
     },
     {
       title: 'Tổng tiền',
       dataIndex: 'totalAmount',
       key: 'totalAmount',
       render: (amount) => (
-        <strong style={{ color: '#d4380d' }}>
+        <span style={{ color: '#d4380d', fontWeight: 'bold' }}>
           {Number(amount).toLocaleString('vi-VN')} đ
-        </strong>
+        </span>
       ),
     },
     {
-      title: 'Trạng thái Chuyến đi',
+      title: 'Tiến độ tour',
       key: 'bookingStatus',
       render: (_, record) => (
         <Select
           value={record.bookingStatus}
-          style={{ width: 140 }}
-          onChange={(val) => handleUpdateBookingStatus(record.id, val)}
+          style={{ width: 145 }}
+          onChange={(newVal) => handleUpdateBookingStatus(record.id, newVal)}
           disabled={record.bookingStatus === 'CANCELLED'}
         >
-          <Select.Option value="PENDING">Chờ xử lý</Select.Option>
-          <Select.Option value="CONFIRMED">Đã xác nhận</Select.Option>
-          <Select.Option value="COMPLETED">Hoàn thành</Select.Option>
-          <Select.Option value="CANCELLED" disabled>Đã hủy</Select.Option>
+          <Select.Option value="PENDING">
+            <Tag color="gold">Chờ xử lý</Tag>
+          </Select.Option>
+          <Select.Option value="CONFIRMED">
+            <Tag color="cyan">Đã xác nhận</Tag>
+          </Select.Option>
+          <Select.Option value="COMPLETED">
+            <Tag color="green">Đã hoàn thành</Tag>
+          </Select.Option>
+          <Select.Option value="CANCELLED">
+            <Tag color="red">Đã hủy</Tag>
+          </Select.Option>
         </Select>
       ),
     },
@@ -142,20 +232,30 @@ const BookingManagement = () => {
       render: (_, record) => (
         <Select
           value={record.paymentStatus}
-          style={{ width: 140 }}
-          onChange={(val) => handleUpdatePaymentStatus(record.id, val)}
+          style={{ width: 155 }}
+          onChange={(newVal) => handleUpdatePaymentStatus(record.id, newVal)}
+          disabled={record.bookingStatus === 'CANCELLED'}
         >
-          <Select.Option value="UNPAID">Chưa thanh toán</Select.Option>
-          <Select.Option value="PAID">Đã thanh toán</Select.Option>
-          <Select.Option value="REFUNDED">Đã hoàn tiền</Select.Option>
+          <Select.Option value="UNPAID">
+            <Tag color="default">Chưa nộp</Tag>
+          </Select.Option>
+          <Select.Option value="DEPOSITED">
+            <Tag color="orange">Đã cọc</Tag>
+          </Select.Option>
+          <Select.Option value="PAID">
+            <Tag color="success">Đã thanh toán</Tag>
+          </Select.Option>
+          <Select.Option value="REFUNDED">
+            <Tag color="purple">Đã hoàn tiền</Tag>
+          </Select.Option>
         </Select>
       ),
     },
     {
-      title: 'Hành động',
-      key: 'actions',
+      title: 'Thao tác',
+      key: 'action',
       render: (_, record) => (
-        <Space>
+        <Space size="middle">
           <Button
             icon={<EyeOutlined />}
             size="small"
@@ -169,13 +269,15 @@ const BookingManagement = () => {
 
           {record.bookingStatus !== 'CANCELLED' && (
             <Popconfirm
-              title="Bạn chắc chắn muốn hủy đơn này và trả ghế về kho?"
+              title="Bạn có chắc chắn muốn hủy đơn này?"
+              description="Số vé sẽ được cộng trả lại vào kho ghế trống của chuyến đi."
               onConfirm={() => handleCancelBooking(record.id)}
-              okText="Hủy đơn"
+              okText="Đồng ý hủy"
               cancelText="Không"
+              okButtonProps={{ danger: true }}
             >
-              <Button icon={<CloseCircleOutlined />} danger size="small">
-                Hủy
+              <Button icon={<CloseCircleOutlined />} size="small" danger>
+                Hủy đơn
               </Button>
             </Popconfirm>
           )}
@@ -186,98 +288,87 @@ const BookingManagement = () => {
 
   return (
     <div>
-      <div style={{ marginBottom: 16 }}>
-        <h2>
-          <ShoppingOutlined style={{ marginRight: 8 }} /> Quản lý Đơn Đặt Tour
-        </h2>
-      </div>
+      <Card style={{ marginBottom: 16 }}>
+        <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
+          <Col>
+            <h2 style={{ margin: 0 }}>
+              <ShoppingOutlined style={{ marginRight: 8, color: '#1677ff' }} />
+              Quản lý Đơn Đặt Tour
+            </h2>
+          </Col>
+        </Row>
+
+        <Row gutter={[12, 12]}>
+          <Col xs={24} sm={12} md={7}>
+            <Input
+              placeholder="Tìm theo Mã đơn, Tên khách, Email..."
+              prefix={<SearchOutlined />}
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              onPressEnter={handleSearch}
+              allowClear
+            />
+          </Col>
+          <Col xs={12} sm={6} md={6}>
+            <Select
+              style={{ width: '100%' }}
+              placeholder="-- Tiến độ tour --"
+              value={bookingStatus}
+              onChange={(val) => setBookingStatus(val)}
+              allowClear
+            >
+              <Select.Option value="PENDING">Chờ xử lý (PENDING)</Select.Option>
+              <Select.Option value="CONFIRMED">Đã xác nhận (CONFIRMED)</Select.Option>
+              <Select.Option value="COMPLETED">Hoàn tất (COMPLETED)</Select.Option>
+              <Select.Option value="CANCELLED">Đã hủy (CANCELLED)</Select.Option>
+            </Select>
+          </Col>
+          <Col xs={12} sm={6} md={6}>
+            <Select
+              style={{ width: '100%' }}
+              placeholder="-- Thanh toán --"
+              value={paymentStatus}
+              onChange={(val) => setPaymentStatus(val)}
+              allowClear
+            >
+              <Select.Option value="UNPAID">Chưa thanh toán (UNPAID)</Select.Option>
+              <Select.Option value="DEPOSITED">Đã đặt cọc (DEPOSITED)</Select.Option>
+              <Select.Option value="PAID">Đã thanh toán (PAID)</Select.Option>
+              <Select.Option value="REFUNDED">Đã hoàn tiền (REFUNDED)</Select.Option>
+            </Select>
+          </Col>
+          <Col xs={24} sm={24} md={5}>
+            <Space>
+              <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch}>
+                Lọc
+              </Button>
+              <Button icon={<ReloadOutlined />} onClick={handleReset}>
+                Làm mới
+              </Button>
+            </Space>
+          </Col>
+        </Row>
+      </Card>
 
       <Table
         columns={columns}
         dataSource={bookings}
         rowKey="id"
         loading={loading}
-        pagination={{ pageSize: 7 }}
+        pagination={{
+          ...pagination,
+          position: ['bottomCenter'],
+          showTotal: (total) => `Tổng cộng ${total} đơn hàng`,
+          showSizeChanger: true,
+        }}
+        onChange={handleTableChange}
       />
 
-      {/* MODAL XEM CHI TIẾT ĐƠN HÀNG VÀ DANH SÁCH HÀNH KHÁCH */}
-      <Modal
-        title={`Chi tiết đơn hàng: ${selectedBooking?.bookingCode}`}
+      <BookingDetailModal
         open={isDetailModalOpen}
-        onCancel={() => setIsDetailModalOpen(false)}
-        width={750}
-        footer={[
-          <Button key="close" onClick={() => setIsDetailModalOpen(false)}>
-            Đóng
-          </Button>,
-        ]}
-      >
-        {selectedBooking && (
-          <div>
-            <Descriptions bordered size="small" column={2}>
-              <Descriptions.Item label="Mã Đơn">{selectedBooking.bookingCode}</Descriptions.Item>
-              <Descriptions.Item label="Ngày đặt">
-                {dayjs(selectedBooking.bookingDate).format('DD/MM/YYYY HH:mm')}
-              </Descriptions.Item>
-              <Descriptions.Item label="Tour">{selectedBooking.tourName}</Descriptions.Item>
-              <Descriptions.Item label="Thời gian">
-                {dayjs(selectedBooking.departureDate).format('DD/MM/YYYY')} ➔{' '}
-                {dayjs(selectedBooking.returnDate).format('DD/MM/YYYY')}
-              </Descriptions.Item>
-              <Descriptions.Item label="Người liên hệ">{selectedBooking.contactName}</Descriptions.Item>
-              <Descriptions.Item label="Số điện thoại">{selectedBooking.contactPhone}</Descriptions.Item>
-              <Descriptions.Item label="Email" span={2}>{selectedBooking.contactEmail}</Descriptions.Item>
-              <Descriptions.Item label="Địa chỉ" span={2}>
-                {selectedBooking.contactAddress || 'Không có'}
-              </Descriptions.Item>
-              <Descriptions.Item label="Yêu cầu đặc biệt" span={2}>
-                {selectedBooking.specialRequests || 'Không có'}
-              </Descriptions.Item>
-            </Descriptions>
-
-            <h4 style={{ marginTop: 20, marginBottom: 8 }}>Danh sách hành khách đi cùng:</h4>
-            <Table
-              dataSource={selectedBooking.passengers || []}
-              rowKey="id"
-              pagination={false}
-              size="small"
-              columns={[
-                { title: 'Họ tên', dataIndex: 'fullName', key: 'fullName' },
-                {
-                  title: 'Loại khách',
-                  dataIndex: 'passengerType',
-                  key: 'passengerType',
-                  render: (t) => (t === 'ADULT' ? <Tag color="blue">Người lớn</Tag> : <Tag color="orange">Trẻ em</Tag>),
-                },
-                {
-                  title: 'Giới tính',
-                  dataIndex: 'gender',
-                  key: 'gender',
-                  render: (g) => (g === 'MALE' ? 'Nam' : 'Nữ'),
-                },
-                {
-                  title: 'CCCD / Hộ chiếu',
-                  dataIndex: 'idCardOrPassport',
-                  key: 'idCardOrPassport',
-                  render: (text) => text || 'Chưa cung cấp',
-                },
-                {
-                  title: 'Phòng đơn',
-                  dataIndex: 'requiresSingleRoom',
-                  key: 'requiresSingleRoom',
-                  render: (req) => (req ? <Tag color="purple">Có</Tag> : 'Không'),
-                },
-                {
-                  title: 'Giá vé',
-                  dataIndex: 'price',
-                  key: 'price',
-                  render: (p) => `${Number(p).toLocaleString('vi-VN')} đ`,
-                },
-              ]}
-            />
-          </div>
-        )}
-      </Modal>
+        booking={selectedBooking}
+        onClose={() => setIsDetailModalOpen(false)}
+      />
     </div>
   );
 };

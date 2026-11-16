@@ -1,6 +1,8 @@
 package com.travelhub.controller.admin;
 
 import com.travelhub.dto.response.ApiResponse;
+import com.travelhub.dto.response.PageResponse;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -10,6 +12,8 @@ import java.util.List;
 import com.travelhub.service.UserService;
 import com.travelhub.dto.response.UserResponse;
 import com.travelhub.dto.request.UserCreateRequest;
+import com.travelhub.dto.request.UserFilterRequest;
+import com.travelhub.dto.request.UserRoleUpdateRequest;
 import com.travelhub.dto.request.UserUpdateRequest;
 
 @RestController // 1. Đánh dấu đây là Controller chuyên trả về JSON (dành cho React)
@@ -63,5 +67,27 @@ public class AdminUserController {
                 .data(null)
                 .build();
         return ResponseEntity.ok(response);
+    }
+    @PatchMapping("/{id}/roles")
+    public ResponseEntity<ApiResponse<UserResponse>> updateUserRoles(
+            @PathVariable Long id,
+            @Valid @RequestBody UserRoleUpdateRequest request) {
+        return ResponseEntity.ok(ApiResponse.<UserResponse>builder()
+                .status(200)
+                .message("Cập nhật quyền hạn người dùng thành công")
+                .data(userService.updateUserRoles(id, request))
+                .build());
+    }
+    @GetMapping("/filter")
+    public ResponseEntity<ApiResponse<PageResponse<UserResponse>>> getUsersWithFilter(
+            UserFilterRequest request) {
+        
+        PageResponse<UserResponse> response = userService.getUsersWithFilter(request);
+
+        return ResponseEntity.ok(ApiResponse.<PageResponse<UserResponse>>builder()
+                .status(200)
+                .message("Lấy danh sách người dùng phân trang thành công")
+                .data(response)
+                .build());
     }
 }

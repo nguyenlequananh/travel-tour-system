@@ -8,20 +8,20 @@ import {
   TrophyOutlined,
   BarChartOutlined,
 } from '@ant-design/icons';
-import axiosClient from '../api/axiosClient';
+import { dashboardService } from '../services';
 
 const DashboardPage = () => {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState(null);
-  const [selectedYear, setSelectedYear] = useState(2026);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   const fetchDashboardStats = async (year) => {
     setLoading(true);
     try {
-      const res = await axiosClient.get(`/admin/dashboard/stats?year=${year}`);
+      const res = await dashboardService.getStats(year);
       setData(res.data);
     } catch (err) {
-      message.error(err.message);
+      message.error(err.message || 'Lỗi tải thống kê doanh thu!');
     } finally {
       setLoading(false);
     }
@@ -86,17 +86,26 @@ const DashboardPage = () => {
   return (
     <div>
       {/* THANH TIÊU ĐỀ VÀ BỘ CHỌN NĂM */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h2><BarChartOutlined style={{ marginRight: 8 }} /> Báo Cáo & Thống Kê Tổng Quan</h2>
-        <div>
-          <span style={{ marginRight: 8, fontWeight: 500 }}>Năm xem báo cáo:</span>
-          <Select value={selectedYear} style={{ width: 120 }} onChange={(val) => setSelectedYear(val)}>
-            <Select.Option value={2026}>Năm 2026</Select.Option>
-            <Select.Option value={2025}>Năm 2025</Select.Option>
-            <Select.Option value={2024}>Năm 2024</Select.Option>
-          </Select>
-        </div>
-      </div>
+      <Card style={{ marginBottom: 20 }}>
+        <Row justify="space-between" align="middle">
+          <Col>
+            <h2 style={{ margin: 0 }}>
+              <BarChartOutlined style={{ marginRight: 8, color: '#1677ff' }} />
+              Báo Cáo & Thống Kê Doanh Thu Tổng Quan
+            </h2>
+          </Col>
+          <Col>
+            <Space align="center">
+              <span style={{ fontWeight: 500 }}>Năm xem báo cáo:</span>
+              <Select value={selectedYear} style={{ width: 120 }} onChange={(val) => setSelectedYear(val)}>
+                <Select.Option value={2026}>Năm 2026</Select.Option>
+                <Select.Option value={2025}>Năm 2025</Select.Option>
+                <Select.Option value={2024}>Năm 2024</Select.Option>
+              </Select>
+            </Space>
+          </Col>
+        </Row>
+      </Card>
 
       {/* 4 THẺ CHỈ SỐ KPI CARDS */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>

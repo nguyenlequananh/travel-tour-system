@@ -4,37 +4,51 @@ import {
   Pagination, Select, Space
 } from 'antd';
 import {
-  EnvironmentOutlined, ClockCircleOutlined, CompassOutlined,
+  EnvironmentOutlined, ClockCircleOutlined,
   ArrowRightOutlined, FilterOutlined, ReloadOutlined
 } from '@ant-design/icons';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import axiosClient from '../../api/axiosClient';
+import tourService from '../../services/tourService';
+import categoryService from '../../services/categoryService';
 
 const HomePage = () => {
   const [tours, setTours] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  // State quản lý tiêu chí lọc
-  const [departureCity, setDepartureCity] = useState(undefined);
-  const [tourType, setTourType] = useState(undefined);
-  const [selectedCategory, setSelectedCategory] = useState(undefined);
+  // 1. ĐỌC TOÀN BỘ TIÊU CHÍ TỪ URL QUERY PARAMETERS (Single Source of Truth)
+  const keyword = searchParams.get('keyword') || '';
+  const categoryIdFromUrl = searchParams.get('categoryId') || undefined;
+  const departureCityFromUrl = searchParams.get('departureCity') || undefined;
+  const tourTypeFromUrl = searchParams.get('tourType') || undefined;
+
+  const pageParam = parseInt(searchParams.get('page') || '1', 10);
+  const currentPage = isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
+
+  // 2. STATE FORM ĐIỀU KHIỂN BỘ LỌC (Tự động đồng bộ 2 chiều với URL)
+  const [formDepartureCity, setFormDepartureCity] = useState(departureCityFromUrl);
+  const [formTourType, setFormTourType] = useState(tourTypeFromUrl);
+  const [formCategory, setFormCategory] = useState(categoryIdFromUrl ? Number(categoryIdFromUrl) : undefined);
+
+  // Khi URL thay đổi (do Back/Forward, click Header, nhập trực tiếp URL), cập nhật lại các ô chọn
+  useEffect(() => {
+    setFormDepartureCity(departureCityFromUrl);
+    setFormTourType(tourTypeFromUrl);
+    setFormCategory(categoryIdFromUrl ? Number(categoryIdFromUrl) : undefined);
+  }, [departureCityFromUrl, tourTypeFromUrl, categoryIdFromUrl]);
 
   // State phân trang
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(currentPage - 1);
   const [pageSize] = useState(8);
   const [totalElements, setTotalElements] = useState(0);
 
-  const keyword = searchParams.get('keyword') || '';
-  const categoryIdFromUrl = searchParams.get('categoryId') || '';
-
-  // 1. Tải danh mục tour đổ vào Select lọc
+  // 3. Tải danh mục tour đổ vào Select lọc
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await axiosClient.get('/categories');
+        const res = await categoryService.getPublicCategories();
         setCategories(res.data || []);
       } catch (err) {
         console.error(err);
@@ -43,25 +57,21 @@ const HomePage = () => {
     fetchCategories();
   }, []);
 
-  // 2. Đồng bộ nếu người dùng bấm chọn danh mục từ Menu trên cùng
-  useEffect(() => {
-    if (categoryIdFromUrl) {
-      setSelectedCategory(Number(categoryIdFromUrl));
-    }
-  }, [categoryIdFromUrl]);
-
-  // 3. HÀM GỌI API LỌC & PHÂN TRANG GỬI XUỐNG BACKEND
-  const fetchTours = async (pageIndex = 0) => {
+  // 4. HÀM TẢI DỮ LIỆU TOUR DỰA 100% VÀO URL QUERY PARAMS
+  const fetchTours = async () => {
     setLoading(true);
     try {
-      let url = `/tours?page=${pageIndex}&size=${pageSize}`;
+      const params = {
+        page: currentPage - 1,
+        size: pageSize,
+      };
 
-      if (keyword) url += `&keyword=${encodeURIComponent(keyword)}`;
-      if (selectedCategory) url += `&categoryId=${selectedCategory}`;
-      if (departureCity) url += `&departureCity=${encodeURIComponent(departureCity)}`;
-      if (tourType) url += `&tourType=${tourType}`;
+      if (keyword) params.keyword = keyword;
+      if (categoryIdFromUrl) params.categoryId = categoryIdFromUrl;
+      if (departureCityFromUrl) params.departureCity = departureCityFromUrl;
+      if (tourTypeFromUrl) params.tourType = tourTypeFromUrl;
 
-      const res = await axiosClient.get(url);
+      const res = await tourService.getPublicTours(params);
       const pageData = res.data;
 
       // Nhận diện mảng dữ liệu thông minh
@@ -76,22 +86,40 @@ const HomePage = () => {
     }
   };
 
-  // Tự động tải lại khi từ khóa Header hoặc Category thay đổi
+  // Tự động tải lại mỗi khi URL thay đổi (Bất kể do Lọc, Tìm kiếm, Phân trang, hay nút Back/Forward)
   useEffect(() => {
-    fetchTours(0);
-  }, [keyword, selectedCategory]);
+    fetchTours();
+  }, [searchParams]);
 
-  // Bấm nút "Lọc Tour"
+  // 5. BẤM NÚT "LỌC TOUR": ĐẨY TOÀN BỘ TIÊU CHÍ LÊN THANH ĐỊA CHỈ URL
   const handleApplyFilter = () => {
-    fetchTours(0);
+    const nextParams = new URLSearchParams();
+    if (keyword) nextParams.set('keyword', keyword);
+    if (formDepartureCity) nextParams.set('departureCity', formDepartureCity);
+    if (formTourType) nextParams.set('tourType', formTourType);
+    if (formCategory) nextParams.set('categoryId', formCategory.toString());
+    // Khi áp dụng bộ lọc mới, luôn trở về trang 1
+    setSearchParams(nextParams);
   };
 
-  // Bấm nút "Đặt lại" (Xóa hết bộ lọc)
+  // 6. CHUYỂN TRANG: GIỮ NGUYÊN CÁC TIÊU CHÍ LỌC VÀ CHỈ ĐỔI THAM SỐ PAGE
+  const handlePageChange = (newPage) => {
+    const nextParams = new URLSearchParams(searchParams);
+    if (newPage > 1) {
+      nextParams.set('page', newPage.toString());
+    } else {
+      nextParams.delete('page');
+    }
+    setSearchParams(nextParams);
+    window.scrollTo({ top: 380, behavior: 'smooth' });
+  };
+
+  // 7. BẤM NÚT "ĐẶT LẠI": XÓA SẠCH TIÊU CHÍ TRÊN FORM VÀ RESET URL
   const handleResetFilter = () => {
-    setDepartureCity(undefined);
-    setTourType(undefined);
-    setSelectedCategory(undefined);
-    navigate('/');
+    setFormDepartureCity(undefined);
+    setFormTourType(undefined);
+    setFormCategory(undefined);
+    setSearchParams({});
   };
 
   return (
@@ -133,8 +161,8 @@ const HomePage = () => {
               placeholder="Tất cả điểm đi"
               allowClear
               style={{ width: '100%' }}
-              value={departureCity}
-              onChange={(val) => setDepartureCity(val)}
+              value={formDepartureCity}
+              onChange={(val) => setFormDepartureCity(val)}
             >
               <Select.Option value="TP. Hồ Chí Minh">TP. Hồ Chí Minh</Select.Option>
               <Select.Option value="Hà Nội">Hà Nội</Select.Option>
@@ -150,8 +178,8 @@ const HomePage = () => {
               placeholder="Tất cả loại tour"
               allowClear
               style={{ width: '100%' }}
-              value={tourType}
-              onChange={(val) => setTourType(val)}
+              value={formTourType}
+              onChange={(val) => setFormTourType(val)}
             >
               <Select.Option value="DOMESTIC">Trong nước</Select.Option>
               <Select.Option value="INTERNATIONAL">Quốc tế</Select.Option>
@@ -165,8 +193,8 @@ const HomePage = () => {
               placeholder="Tất cả danh mục"
               allowClear
               style={{ width: '100%' }}
-              value={selectedCategory}
-              onChange={(val) => setSelectedCategory(val)}
+              value={formCategory}
+              onChange={(val) => setFormCategory(val)}
             >
               {categories.map((c) => (
                 <Select.Option key={c.id} value={c.id}>
@@ -290,17 +318,16 @@ const HomePage = () => {
             ))}
           </Row>
 
-          {/* 5. PHÂN TRANG DƯỚI CÙNG */}
+          {/* 5. PHÂN TRANG DƯỚI CÙNG (CĂN GIỮA CHUẨN) */}
           {totalElements > 0 && (
-            <div style={{ textAlign: 'center', marginTop: 40, marginBottom: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: 40, marginBottom: 20 }}>
               <Pagination
-                current={page + 1}
+                align="center"
+                current={currentPage}
                 pageSize={pageSize}
                 total={totalElements}
                 showSizeChanger={false}
-                onChange={(newPage) => {
-                  fetchTours(newPage - 1);
-                }}
+                onChange={handlePageChange}
               />
             </div>
           )}

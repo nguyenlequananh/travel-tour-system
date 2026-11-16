@@ -1,6 +1,7 @@
 package com.travelhub.service.impl;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.travelhub.dto.request.LoginRequest;
@@ -23,7 +24,7 @@ import java.util.UUID;
 public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder(); 
+    private final PasswordEncoder passwordEncoder; 
     private final JwtUtils jwtUtils; // Tiêm JwtUtils
     
     @Override
@@ -63,7 +64,7 @@ public class AuthServiceImpl implements AuthService {
         if(userRepository.existsByEmail(request.getEmail().trim().toLowerCase())){
             throw new RuntimeException("Email đã tồn tại!");
         }
-        String encodedPassword = new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder().encode(request.getPassword());
+        String encodedPassword = passwordEncoder.encode(request.getPassword());
         Role customerRole = roleRepository.findByName("ROLE_CUSTOMER").orElseThrow(() -> new RuntimeException("Không tìm thấy quyền ROLE_CUSTOMER!"));
 
         User newUser = User.builder()
@@ -73,11 +74,10 @@ public class AuthServiceImpl implements AuthService {
                 .phoneNumber(request.getPhoneNumber() != null ? request.getPhoneNumber().trim() : null)
                 .address(request.getAddress() != null ? request.getAddress().trim() : null)
                 .isActive(true) // Tài khoản mới tạo mặc định mở hoạt động
-                .createdAt(java.time.LocalDateTime.now())
                 .build();
         newUser.getRoles().add(customerRole); // Gán quyền ROLE_CUSTOMER cho người dùng mới
         User savedUser = userRepository.save(newUser);
-        String token = UUID.randomUUID().toString(); // Giả sử bạn đã có token từ quá trình đăng nhập trước đó
+        String token = jwtUtils.generateToken(savedUser); // Giả sử bạn đã có token từ quá trình đăng nhập trước đó
         return AuthResponse.builder()
                 .id(savedUser.getId())
                 .fullName(savedUser.getFullName())

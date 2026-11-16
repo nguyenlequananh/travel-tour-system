@@ -31,6 +31,7 @@ public class BookingCreateRequest {
 
     private String contactAddress;
     private String specialRequests;
+    private Long pickupPointId; // Điểm đón khách chọn (có thể null nếu không bắt buộc)
 
     @NotEmpty(message = "Danh sách hành khách không được để trống")
     @Valid

@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Tour {
+public class Tour extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -60,8 +60,4 @@ public class Tour {
     @Column(nullable = false)
     @Builder.Default
     private TourStatus status = TourStatus.ACTIVE; // Mặc định tạo mới là ACTIVE
-
-    @Column(name = "created_at")
-    @Builder.Default
-    private LocalDateTime createdAt = LocalDateTime.now();
 }

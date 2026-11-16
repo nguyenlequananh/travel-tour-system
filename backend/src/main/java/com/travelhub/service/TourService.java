@@ -4,6 +4,8 @@ import com.travelhub.dto.request.TourFilterRequest;
 import com.travelhub.dto.request.TourUpdateRequest;
 import com.travelhub.dto.response.PageResponse;
 import com.travelhub.dto.response.TourAdminResponse;
+import com.travelhub.dto.response.TourDetailResponse;
+
 import java.util.List;
 
 import org.springframework.data.domain.Pageable;
@@ -15,4 +17,5 @@ public interface TourService {
     TourAdminResponse updateTour(Long id, TourUpdateRequest request);
     void deleteTour(Long id);
     PageResponse<TourAdminResponse>  getToursWithFilter(TourFilterRequest request);
+    TourDetailResponse getTourDetailById(Long id);
 }

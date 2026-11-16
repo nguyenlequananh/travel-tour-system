@@ -14,3 +14,10 @@
 .idea/
 *.DS_Store
 *.log
+logs/
+
+# File tạm & backup
+*.zip
+*_source.txt
+*.code-workspace
+.env.local

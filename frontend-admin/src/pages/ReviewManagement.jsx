@@ -2,18 +2,26 @@ import React, { useEffect, useState } from 'react';
 import { Table, Rate, Button, Popconfirm, message, Space, Tag, Card } from 'antd';
 import { StarOutlined, DeleteOutlined, UserOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import axiosClient from '../api/axiosClient';
+import { reviewService } from '../services';
 
 const ReviewManagement = () => {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
 
-  // 1. Tải toàn bộ đánh giá trong hệ thống
-  const fetchReviews = async () => {
+  const fetchReviews = async (page = 0, size = 10) => {
     setLoading(true);
     try {
-      const res = await axiosClient.get('/admin/reviews');
-      setReviews(res.data || []);
+      const params = { page, size, sortBy: 'id', order: 'DESC' };
+      const res = await reviewService.getAdminReviews(params);
+      const pageData = res.data;
+
+      setReviews(pageData.data || []);
+      setPagination({
+        current: pageData.pageNumber + 1,
+        pageSize: pageData.pageSize,
+        total: pageData.totalElements,
+      });
     } catch (err) {
       message.error(err.message || 'Lỗi khi tải danh sách đánh giá!');
     } finally {
@@ -22,15 +30,18 @@ const ReviewManagement = () => {
   };
 
   useEffect(() => {
-    fetchReviews();
+    fetchReviews(0, pagination.pageSize);
   }, []);
 
-  // 2. Xóa đánh giá spam / tiêu cực
+  const handleTableChange = (pagin) => {
+    fetchReviews(pagin.current - 1, pagin.pageSize);
+  };
+
   const handleDelete = async (id) => {
     try {
-      await axiosClient.delete(`/admin/reviews/${id}`);
+      await reviewService.deleteReview(id);
       message.success('Đã xóa đánh giá thành công!');
-      fetchReviews();
+      fetchReviews(pagination.current - 1, pagination.pageSize);
     } catch (err) {
       message.error(err.message || 'Lỗi khi xóa đánh giá!');
     }
@@ -99,20 +110,22 @@ const ReviewManagement = () => {
 
   return (
     <div>
-      <div style={{ marginBottom: 16 }}>
-        <h2><StarOutlined style={{ color: '#faad14', marginRight: 8 }} /> Quản lý Đánh Giá & Nhận Xét</h2>
+      <Card style={{ marginBottom: 16 }}>
+        <h2 style={{ margin: 0 }}>
+          <StarOutlined style={{ color: '#faad14', marginRight: 8 }} />
+          Quản lý Đánh Giá & Nhận Xét
+        </h2>
         <span style={{ color: '#888' }}>Kiểm duyệt các phản hồi từ khách hàng sau khi đi tour</span>
-      </div>
-
-      <Card>
-        <Table
-          columns={columns}
-          dataSource={reviews}
-          rowKey="id"
-          loading={loading}
-          pagination={{ pageSize: 8 }}
-        />
       </Card>
+
+      <Table
+        columns={columns}
+        dataSource={reviews}
+        rowKey="id"
+        loading={loading}
+        pagination={pagination}
+        onChange={handleTableChange}
+      />
     </div>
   );
 };

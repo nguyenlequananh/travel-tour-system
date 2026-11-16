@@ -1,8 +1,12 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
 
-// Chốt bảo vệ quyền Admin
+// Chốt bảo vệ quyền hạn & Xử lý Google OAuth2
 import AdminRoute from './components/AdminRoute';
+import GuideRoute from './components/GuideRoute';
+import GuideLayout from './components/GuideLayout';
+import OAuth2RedirectHandler from './components/OAuth2RedirectHandler';
 
 // Layout & Trang Client (Khách hàng)
 import ClientLayout from './components/ClientLayout';
@@ -10,6 +14,11 @@ import HomePage from './pages/client/HomePage';
 import TourDetailPage from './pages/client/TourDetailPage';
 import MyBookingsPage from './pages/client/MyBookingsPage';
 import CustomTourRequestPage from './pages/client/CustomTourRequestPage';
+import ProfilePage from './pages/client/ProfilePage';
+import PaymentCallbackPage from './pages/client/PaymentCallbackPage';
+
+// Trang Hướng dẫn viên (Guide)
+import GuideDashboardPage from './pages/client/GuideDashboardPage';
 
 // Layout & Trang Admin (Quản trị viên)
 import AdminLayout from './components/AdminLayout';
@@ -29,35 +38,47 @@ import CustomTourManagement from './pages/CustomTourManagement';
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        {/* ================= 1. KHU VỰC KHÁCH HÀNG (CÔNG KHAI) ================= */}
-        <Route path="/" element={<ClientLayout />}>
-          <Route index element={<HomePage />} />
-          <Route path="tours/:id" element={<TourDetailPage />} />
-          <Route path="my-bookings" element={<MyBookingsPage />} />
-          <Route path="custom-tour" element={<CustomTourRequestPage />} />
+      <AuthProvider>
+        <Routes>
+          {/* ================= XỬ LÝ REDIRECT GOOGLE OAUTH2 ================= */}
+          <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
 
-// Trong Admin Route:
-        </Route>
-
-        {/* ================= 2. KHU VỰC ADMIN (BỊ KHÓA CHẶT BỞI AdminRoute) ================= */}
-        <Route element={<AdminRoute />}>
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route path="dashboard" element={<DashboardPage />} />
-            <Route path="tours" element={<TourManagement />} />
-            <Route path="categories" element={<CategoryManagement />} />
-            <Route path="departures" element={<TourDepartureManagement />} />
-            <Route path="itineraries" element={<TourItineraryManagement />} />
-            <Route path="promotions" element={<PromotionManagement />} />
-            <Route path="bookings" element={<BookingManagement />} />
-            <Route path="cancellations" element={<CancellationManagement />} />
-            <Route path="payments" element={<PaymentManagement />} />
-            <Route path="users" element={<UserManagement />} />
-            <Route path="reviews" element={<ReviewManagement />} />
-            <Route path="custom-tours" element={<CustomTourManagement />} />
+          {/* ================= 1. KHU VỰC KHÁCH HÀNG (CLIENT CÔNG KHAI) ================= */}
+          <Route path="/" element={<ClientLayout />}>
+            <Route index element={<HomePage />} />
+            <Route path="tours/:id" element={<TourDetailPage />} />
+            <Route path="my-bookings" element={<MyBookingsPage />} />
+            <Route path="custom-tour" element={<CustomTourRequestPage />} />
+            <Route path="profile" element={<ProfilePage />} />
+            <Route path="payment-callback" element={<PaymentCallbackPage />} />
           </Route>
-        </Route>
-      </Routes>
+
+          {/* ================= 2. KHU VỰC HƯỚNG DẪN VIÊN (BỊ KHÓA BỞI GuideRoute) ================= */}
+          <Route element={<GuideRoute />}>
+            <Route element={<GuideLayout />}>
+              <Route path="/guide" element={<GuideDashboardPage />} />
+            </Route>
+          </Route>
+
+          {/* ================= 3. KHU VỰC ADMIN (BỊ KHÓA BỞI AdminRoute) ================= */}
+          <Route element={<AdminRoute />}>
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route path="dashboard" element={<DashboardPage />} />
+              <Route path="tours" element={<TourManagement />} />
+              <Route path="categories" element={<CategoryManagement />} />
+              <Route path="departures" element={<TourDepartureManagement />} />
+              <Route path="itineraries" element={<TourItineraryManagement />} />
+              <Route path="promotions" element={<PromotionManagement />} />
+              <Route path="bookings" element={<BookingManagement />} />
+              <Route path="cancellations" element={<CancellationManagement />} />
+              <Route path="payments" element={<PaymentManagement />} />
+              <Route path="users" element={<UserManagement />} />
+              <Route path="reviews" element={<ReviewManagement />} />
+              <Route path="custom-tours" element={<CustomTourManagement />} />
+            </Route>
+          </Route>
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

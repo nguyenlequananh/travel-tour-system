@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Space, Modal, Form, Input, Popconfirm, message } from 'antd';
+import { Table, Button, Space, Modal, Form, Input, Popconfirm, message, Card, Row, Col } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, AppstoreOutlined } from '@ant-design/icons';
-import axiosClient from '../api/axiosClient';
+import { categoryService } from '../services';
 
 const CategoryManagement = () => {
   const [categories, setCategories] = useState([]);
@@ -13,10 +13,10 @@ const CategoryManagement = () => {
   const fetchCategories = async () => {
     setLoading(true);
     try {
-      const res = await axiosClient.get('/admin/categories');
+      const res = await categoryService.getAllCategories();
       setCategories(res.data || []);
     } catch (err) {
-      message.error(err.message);
+      message.error(err.message || 'Lỗi tải danh mục!');
     } finally {
       setLoading(false);
     }
@@ -40,10 +40,10 @@ const CategoryManagement = () => {
   const handleSubmit = async (values) => {
     try {
       if (editingId) {
-        await axiosClient.put(`/admin/categories/${editingId}`, values);
+        await categoryService.updateCategory(editingId, values);
         message.success('Cập nhật danh mục thành công!');
       } else {
-        await axiosClient.post('/admin/categories', values);
+        await categoryService.createCategory(values);
         message.success('Tạo danh mục mới thành công!');
       }
       setIsModalOpen(false);
@@ -55,7 +55,7 @@ const CategoryManagement = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axiosClient.delete(`/admin/categories/${id}`);
+      await categoryService.deleteCategory(id);
       message.success('Xóa danh mục thành công!');
       fetchCategories();
     } catch (err) {
@@ -88,12 +88,21 @@ const CategoryManagement = () => {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-        <h2><AppstoreOutlined style={{ marginRight: 8 }} /> Quản lý Danh mục Tour</h2>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => handleOpenModal(null)}>
-          Thêm Danh Mục
-        </Button>
-      </div>
+      <Card style={{ marginBottom: 16 }}>
+        <Row justify="space-between" align="middle">
+          <Col>
+            <h2 style={{ margin: 0 }}>
+              <AppstoreOutlined style={{ marginRight: 8, color: '#1677ff' }} />
+              Quản lý Danh mục Tour
+            </h2>
+          </Col>
+          <Col>
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => handleOpenModal(null)}>
+              Thêm Danh Mục
+            </Button>
+          </Col>
+        </Row>
+      </Card>
 
       <Table columns={columns} dataSource={categories} rowKey="id" loading={loading} />
 

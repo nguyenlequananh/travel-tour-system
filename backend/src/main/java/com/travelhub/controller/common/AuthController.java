@@ -1,4 +1,4 @@
-package com.travelhub.controller.client;
+package com.travelhub.controller.common;
 
 import com.travelhub.dto.request.LoginRequest;
 import com.travelhub.dto.request.UserCreateRequest;

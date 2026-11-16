@@ -5,11 +5,16 @@ import {
 } from 'antd';
 import {
   CalendarOutlined, EnvironmentOutlined, ClockCircleOutlined,
-  TagOutlined, TeamOutlined, StarOutlined, UserOutlined, SendOutlined
+  TagOutlined, TeamOutlined, StarOutlined, UserOutlined, SendOutlined,
+  CompassOutlined
 } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
-import axiosClient from '../../api/axiosClient';
+import tourService from '../../services/tourService';
+import reviewService from '../../services/reviewService';
+import departureService from '../../services/departureService';
+import promotionService from '../../services/promotionService';
+import bookingService from '../../services/bookingService';
 
 const TourDetailPage = () => {
   const { id } = useParams();
@@ -17,6 +22,10 @@ const TourDetailPage = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [selectedDeparture, setSelectedDeparture] = useState(null);
+
+  // State cho Điểm đón khách (Pickup Points)
+  const [pickupPoints, setPickupPoints] = useState([]);
+  const [loadingPickupPoints, setLoadingPickupPoints] = useState(false);
 
   // State đánh giá (Reviews)
   const [reviews, setReviews] = useState([]);
@@ -26,6 +35,7 @@ const TourDetailPage = () => {
 
   // State cho Modal đặt tour
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [submittingBooking, setSubmittingBooking] = useState(false);
   const [bookingForm] = Form.useForm();
   const [promoCode, setPromoCode] = useState('');
   const [discountInfo, setDiscountInfo] = useState(null);
@@ -34,13 +44,22 @@ const TourDetailPage = () => {
   const fetchTourDetail = async () => {
     setLoading(true);
     try {
-      const res = await axiosClient.get(`/tours/${id}`);
+      const res = await tourService.getPublicTourDetail(id);
       setData(res.data);
       if (res.data?.departures?.length > 0) {
-        const firstOpen = res.data.departures.find(d => d.status === 'OPEN' && d.availableSeats > 0);
-        setSelectedDeparture(firstOpen || res.data.departures[0]);
+        // Chỉ chọn đợt khởi hành còn mở, còn chỗ và CHƯA khởi hành (ngày đi từ hôm nay trở đi)
+        const firstAvailable = res.data.departures.find(
+          (d) =>
+            d.status === 'OPEN' &&
+            d.availableSeats > 0 &&
+            !dayjs(d.departureDate).isBefore(dayjs(), 'day')
+        );
+        setSelectedDeparture(firstAvailable || null);
+      } else {
+        setSelectedDeparture(null);
       }
     } catch (err) {
+      console.error('Lỗi tải chi tiết tour:', err);
       message.error('Không tìm thấy thông tin tour!');
     } finally {
       setLoading(false);
@@ -51,8 +70,8 @@ const TourDetailPage = () => {
   const fetchReviews = async () => {
     try {
       const [resReviews, resRating] = await Promise.all([
-        axiosClient.get(`/reviews/tour/${id}`),
-        axiosClient.get(`/reviews/tour/${id}/rating`),
+        reviewService.getReviewsByTourId(id),
+        reviewService.getAverageRating(id),
       ]);
       setReviews(resReviews.data || []);
       setAvgRating(resRating.data || 0);
@@ -61,12 +80,37 @@ const TourDetailPage = () => {
     }
   };
 
+  // 3. Tải danh sách điểm đón dựa theo đợt khởi hành (Departure)
+  const fetchPickupPoints = async (departureId) => {
+    setLoadingPickupPoints(true);
+    try {
+      const res = await departureService.getPickupPoints(departureId);
+      const points = res.data?.data || res.data || [];
+      setPickupPoints(Array.isArray(points) ? points : []);
+    } catch (err) {
+      console.error('Lỗi tải điểm đón:', err);
+      setPickupPoints([]);
+    } finally {
+      setLoadingPickupPoints(false);
+    }
+  };
+
   useEffect(() => {
     fetchTourDetail();
     fetchReviews();
   }, [id]);
 
-  // 3. Khách gửi đánh giá mới
+  // Mỗi khi selectedDeparture thay đổi, tự động load lại điểm đón tương ứng
+  useEffect(() => {
+    if (selectedDeparture?.id) {
+      fetchPickupPoints(selectedDeparture.id);
+      bookingForm.setFieldValue('pickupPointId', undefined);
+    } else {
+      setPickupPoints([]);
+    }
+  }, [selectedDeparture?.id]);
+
+  // 4. Khách gửi đánh giá mới
   const handleSubmitReview = async (values) => {
     const savedUser = JSON.parse(localStorage.getItem('travel_user') || '{}');
     if (!savedUser.id) {
@@ -75,14 +119,14 @@ const TourDetailPage = () => {
 
     setSubmittingReview(true);
     try {
-      await axiosClient.post(`/reviews?userId=${savedUser.id}`, {
+      await reviewService.createReview({
         tourId: Number(id),
         rating: values.rating,
         comment: values.comment,
-      });
+      }, savedUser.id);
       message.success('Cảm ơn bạn đã gửi đánh giá!');
       reviewForm.resetFields();
-      fetchReviews(); // Tải lại danh sách review mới
+      fetchReviews();
     } catch (err) {
       message.error(err.message || 'Lỗi khi gửi đánh giá!');
     } finally {
@@ -90,13 +134,13 @@ const TourDetailPage = () => {
     }
   };
 
-  // 4. Khách kiểm tra mã giảm giá
+  // 5. Khách kiểm tra mã giảm giá
   const handleCheckPromo = async () => {
     if (!promoCode.trim()) {
       return message.warning('Vui lòng nhập mã giảm giá!');
     }
     try {
-      const res = await axiosClient.get(`/promotions/check?code=${promoCode.trim()}`);
+      const res = await promotionService.checkPromotion(promoCode.trim());
       setDiscountInfo(res.data);
       message.success('Áp dụng mã giảm giá thành công!');
     } catch (err) {
@@ -105,30 +149,71 @@ const TourDetailPage = () => {
     }
   };
 
-  // 5. Khách bấm Xác nhận đặt tour (POST /bookings)
+  // 6. Khách bấm Xác nhận đặt tour (POST /bookings)
   const handleBookTour = async (values) => {
     try {
       const savedUser = JSON.parse(localStorage.getItem('travel_user') || '{}');
+      if (!savedUser.id) {
+        return message.warning('Vui lòng đăng nhập tài khoản trước khi đặt tour!');
+      }
+
+      if (!selectedDeparture || !selectedDeparture.id) {
+        return message.error('Vui lòng chọn đợt khởi hành hợp lệ!');
+      }
+
+      if (dayjs(selectedDeparture.departureDate).isBefore(dayjs(), 'day')) {
+        return message.error('Đợt khởi hành này đã qua ngày đi, không thể đặt vé!');
+      }
+
+      if (selectedDeparture.status !== 'OPEN' || selectedDeparture.availableSeats <= 0) {
+        return message.error('Đợt khởi hành này hiện đã đóng hoặc hết chỗ!');
+      }
+
+      const passengerList = values.passengers || [];
+      if (passengerList.length === 0) {
+        return message.error('Vui lòng thêm ít nhất một hành khách!');
+      }
+
+      if (passengerList.length > selectedDeparture.availableSeats) {
+        return message.error(
+          `Số lượng hành khách (${passengerList.length}) vượt quá số chỗ trống (${selectedDeparture.availableSeats}) của chuyến đi!`
+        );
+      }
+
+      const sanitizedPassengers = passengerList.map((p) => ({
+        fullName: p.fullName?.trim(),
+        passengerType: p.passengerType || 'ADULT',
+        gender: p.gender || 'MALE',
+        birthDate: p.birthDate ? dayjs(p.birthDate).format('YYYY-MM-DD') : null,
+        idCardOrPassport: p.idCardOrPassport ? p.idCardOrPassport.trim() : null,
+        requiresSingleRoom: Boolean(p.requiresSingleRoom),
+      }));
 
       const payload = {
-        userId: savedUser.id,
-        departureId: selectedDeparture.id,
+        userId: Number(savedUser.id),
+        departureId: Number(selectedDeparture.id),
+        pickupPointId: values.pickupPointId ? Number(values.pickupPointId) : null,
         promotionCode: discountInfo ? discountInfo.code : null,
-        contactName: values.contactName,
-        contactPhone: values.contactPhone,
-        contactEmail: values.contactEmail,
-        contactAddress: values.contactAddress,
-        specialRequests: values.specialRequests,
-        passengers: values.passengers,
+        contactName: values.contactName?.trim(),
+        contactPhone: values.contactPhone?.trim(),
+        contactEmail: values.contactEmail?.trim(),
+        contactAddress: values.contactAddress ? values.contactAddress.trim() : null,
+        specialRequests: values.specialRequests ? values.specialRequests.trim() : null,
+        passengers: sanitizedPassengers,
       };
 
-      await axiosClient.post('/bookings', payload);
-      message.success('Đặt tour thành công!');
+      setSubmittingBooking(true);
+      const res = await bookingService.createBooking(payload);
+      message.success(res?.message || 'Đặt tour thành công! Vui lòng tiến hành thanh toán.');
       setIsBookingModalOpen(false);
       bookingForm.resetFields();
       navigate('/my-bookings');
     } catch (err) {
-      message.error(err.message || 'Có lỗi xảy ra khi đặt vé!');
+      console.error('Lỗi chi tiết khi đặt vé:', err);
+      const errMsg = err.response?.data?.message || err.message || 'Có lỗi xảy ra khi đặt vé!';
+      message.error(errMsg);
+    } finally {
+      setSubmittingBooking(false);
     }
   };
 
@@ -141,6 +226,12 @@ const TourDetailPage = () => {
   }
 
   const { tour, departures, itineraries } = data;
+
+  const isDepartureDisabled =
+    !selectedDeparture ||
+    selectedDeparture.status !== 'OPEN' ||
+    selectedDeparture.availableSeats === 0 ||
+    dayjs(selectedDeparture.departureDate).isBefore(dayjs(), 'day');
 
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto' }}>
@@ -179,7 +270,8 @@ const TourDetailPage = () => {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
                 {departures.map((d) => {
                   const isSelected = selectedDeparture?.id === d.id;
-                  const isClosed = d.status !== 'OPEN' || d.availableSeats === 0;
+                  const isPast = dayjs(d.departureDate).isBefore(dayjs(), 'day');
+                  const isClosed = d.status !== 'OPEN' || d.availableSeats === 0 || isPast;
 
                   return (
                     <div
@@ -187,10 +279,11 @@ const TourDetailPage = () => {
                       onClick={() => !isClosed && setSelectedDeparture(d)}
                       style={{
                         border: isSelected ? '2px solid #1677ff' : '1px solid #e8e8e8',
-                        backgroundColor: isSelected ? '#e6f4ff' : isClosed ? '#fafafa' : '#fff',
+                        backgroundColor: isSelected ? '#e6f4ff' : isClosed ? '#f5f5f5' : '#fff',
                         borderRadius: 10,
                         padding: 14,
                         cursor: isClosed ? 'not-allowed' : 'pointer',
+                        opacity: isClosed ? 0.6 : 1,
                         position: 'relative',
                         transition: 'all 0.3s',
                       }}
@@ -210,8 +303,12 @@ const TourDetailPage = () => {
                         Trẻ em: <b>{Number(d.childPrice).toLocaleString()} đ</b>
                       </div>
                       <div style={{ fontSize: 12 }}>
-                        {isClosed ? (
-                          <Tag color="red">Hết chỗ / Đã đóng</Tag>
+                        {isPast ? (
+                          <Tag color="default">Đã khởi hành</Tag>
+                        ) : d.status !== 'OPEN' ? (
+                          <Tag color="red">Đã đóng</Tag>
+                        ) : d.availableSeats === 0 ? (
+                          <Tag color="orange">Hết chỗ</Tag>
                         ) : (
                           <Tag color="green">Còn trống {d.availableSeats} chỗ</Tag>
                         )}
@@ -255,7 +352,7 @@ const TourDetailPage = () => {
             )}
           </Card>
 
-          {/* ================= KHUNG ĐÁNH GIÁ CỦA KHÁCH HÀNG (REVIEWS) ================= */}
+          {/* KHUNG ĐÁNH GIÁ CỦA KHÁCH HÀNG (REVIEWS) */}
           <Card
             title={
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -267,7 +364,6 @@ const TourDetailPage = () => {
             }
             style={{ marginBottom: 25 }}
           >
-            {/* FORM GỬI ĐÁNH GIÁ MỚI */}
             <div style={{ background: '#fafafa', padding: 18, borderRadius: 8, marginBottom: 25 }}>
               <h4 style={{ marginBottom: 10 }}>Viết nhận xét của bạn:</h4>
               <Form form={reviewForm} layout="vertical" onFinish={handleSubmitReview}>
@@ -283,7 +379,6 @@ const TourDetailPage = () => {
               </Form>
             </div>
 
-            {/* DANH SÁCH BÌNH LUẬN */}
             <List
               itemLayout="horizontal"
               dataSource={reviews}
@@ -326,6 +421,9 @@ const TourDetailPage = () => {
                 <div style={{ background: '#f5f5f5', padding: 15, borderRadius: 8, marginBottom: 20 }}>
                   <div style={{ fontSize: 14, marginBottom: 8 }}>
                     Ngày đi: <b>{dayjs(selectedDeparture.departureDate).format('DD/MM/YYYY')}</b>
+                    {dayjs(selectedDeparture.departureDate).isBefore(dayjs(), 'day') && (
+                      <Tag color="default" style={{ marginLeft: 8 }}>Đã khởi hành</Tag>
+                    )}
                   </div>
                   <div style={{ fontSize: 14, marginBottom: 8 }}>
                     Ngày về: <b>{dayjs(selectedDeparture.returnDate).format('DD/MM/YYYY')}</b>
@@ -342,7 +440,9 @@ const TourDetailPage = () => {
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span>Chỗ còn trống:</span>
-                    <b style={{ color: '#52c41a' }}>{selectedDeparture.availableSeats} ghế</b>
+                    <b style={{ color: selectedDeparture.availableSeats > 0 ? '#52c41a' : '#ff4d4f' }}>
+                      {selectedDeparture.availableSeats} ghế
+                    </b>
                   </div>
                 </div>
 
@@ -351,19 +451,20 @@ const TourDetailPage = () => {
                   size="large"
                   block
                   style={{ height: 50, fontSize: 16, fontWeight: 'bold' }}
-                  disabled={!selectedDeparture || selectedDeparture.availableSeats === 0}
+                  disabled={isDepartureDisabled}
                   onClick={() => {
                     const savedUser = JSON.parse(localStorage.getItem('travel_user') || '{}');
                     if (!savedUser.id) {
                       return message.warning('Vui lòng đăng nhập tài khoản trước khi đặt tour!');
                     }
                     bookingForm.setFieldsValue({
-                      contactName: savedUser.fullName,
-                      contactEmail: savedUser.email,
-                      contactPhone: savedUser.phoneNumber,
+                      contactName: savedUser.fullName || '',
+                      contactEmail: savedUser.email || '',
+                      contactPhone: savedUser.phoneNumber || '',
+                      contactAddress: savedUser.address || '',
                       passengers: [
                         {
-                          fullName: savedUser.fullName,
+                          fullName: savedUser.fullName || '',
                           passengerType: 'ADULT',
                           gender: 'MALE',
                           requiresSingleRoom: false,
@@ -373,11 +474,21 @@ const TourDetailPage = () => {
                     setIsBookingModalOpen(true);
                   }}
                 >
-                  Đặt Tour Ngay
+                  {dayjs(selectedDeparture.departureDate).isBefore(dayjs(), 'day')
+                    ? 'Chuyến đi đã khởi hành'
+                    : selectedDeparture.status !== 'OPEN'
+                    ? 'Đợt khởi hành đã đóng'
+                    : selectedDeparture.availableSeats === 0
+                    ? 'Đã hết chỗ trống'
+                    : 'Đặt Tour Ngay'}
                 </Button>
               </div>
             ) : (
-              <p style={{ color: '#888' }}>Vui lòng chọn đợt khởi hành bên cạnh.</p>
+              <p style={{ color: '#888' }}>
+                {departures?.length > 0
+                  ? 'Hiện không có đợt khởi hành khả dụng (đã đóng, hết chỗ hoặc đã khởi hành).'
+                  : 'Vui lòng chọn đợt khởi hành bên cạnh.'}
+              </p>
             )}
           </Card>
         </Col>
@@ -390,25 +501,25 @@ const TourDetailPage = () => {
         onCancel={() => setIsBookingModalOpen(false)}
         footer={null}
         width={750}
-        destroyOnHidden
+        destroyOnClose
       >
         <Form form={bookingForm} layout="vertical" onFinish={handleBookTour}>
           <h4 style={{ color: '#1677ff', marginBottom: 12 }}>1. Thông tin người đặt vé</h4>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="contactName" label="Họ và tên" rules={[{ required: true }]}>
+              <Form.Item name="contactName" label="Họ và tên" rules={[{ required: true, message: 'Vui lòng nhập họ tên!' }]}>
                 <Input placeholder="Nguyễn Văn A" />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="contactPhone" label="Số điện thoại" rules={[{ required: true }]}>
+              <Form.Item name="contactPhone" label="Số điện thoại" rules={[{ required: true, message: 'Vui lòng nhập số điện thoại!' }]}>
                 <Input placeholder="0912345678" />
               </Form.Item>
             </Col>
           </Row>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="contactEmail" label="Email" rules={[{ required: true, type: 'email' }]}>
+              <Form.Item name="contactEmail" label="Email" rules={[{ required: true, type: 'email', message: 'Vui lòng nhập email hợp lệ!' }]}>
                 <Input placeholder="email@gmail.com" />
               </Form.Item>
             </Col>
@@ -421,9 +532,57 @@ const TourDetailPage = () => {
 
           <Divider style={{ margin: '15px 0' }} />
 
+          {/* CHỌN ĐIỂM ĐÓN KHÁCH */}
+          <h4 style={{ color: '#1677ff', marginBottom: 12 }}>
+            <CompassOutlined style={{ marginRight: 6 }} /> 2. Chọn điểm đón khách
+          </h4>
+          <Row gutter={16}>
+            <Col span={24}>
+              <Form.Item
+                name="pickupPointId"
+                label={
+                  <span>
+                    Điểm tập trung / Đón khách{' '}
+                    {pickupPoints.length > 0 ? (
+                      <span style={{ color: '#ff4d4f' }}>*</span>
+                    ) : (
+                      <span style={{ color: '#888', fontWeight: 'normal' }}>(Chuyến này không có điểm đón dọc đường)</span>
+                    )}
+                  </span>
+                }
+                rules={[
+                  {
+                    required: pickupPoints.length > 0,
+                    message: 'Vui lòng chọn điểm đón của bạn!',
+                  },
+                ]}
+              >
+                <Select
+                  placeholder={
+                    pickupPoints.length > 0
+                      ? '-- Chọn điểm đón xe dọc đường --'
+                      : '-- Không có điểm đón dọc đường (tập trung tại trụ sở/sân bay) --'
+                  }
+                  loading={loadingPickupPoints}
+                  allowClear
+                  disabled={pickupPoints.length === 0}
+                  notFoundContent={loadingPickupPoints ? <Spin size="small" /> : 'Chuyến này chưa có danh sách điểm đón cụ thể'}
+                >
+                  {pickupPoints.map((point) => (
+                    <Select.Option key={point.id} value={point.id}>
+                      📍 <b>{point.locationName}</b> {point.pickupTime ? `(Đón lúc: ${point.pickupTime})` : ''}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Divider style={{ margin: '15px 0' }} />
+
           {/* DANH SÁCH HÀNH KHÁCH ĐI CÙNG */}
           <h4 style={{ color: '#1677ff', margin: 0, marginBottom: 12 }}>
-            <TeamOutlined style={{ marginRight: 6 }} /> 2. Danh sách hành khách đi tour
+            <TeamOutlined style={{ marginRight: 6 }} /> 3. Danh sách hành khách đi tour
           </h4>
 
           <Form.List name="passengers">
@@ -439,12 +598,23 @@ const TourDetailPage = () => {
                   >
                     <Row gutter={12}>
                       <Col span={10}>
-                        <Form.Item {...restField} name={[name, 'fullName']} label="Họ tên" rules={[{ required: true }]}>
+                        <Form.Item
+                          {...restField}
+                          name={[name, 'fullName']}
+                          label="Họ tên"
+                          rules={[{ required: true, message: 'Nhập họ tên hành khách!' }]}
+                        >
                           <Input placeholder="Lê Văn Khách" />
                         </Form.Item>
                       </Col>
                       <Col span={7}>
-                        <Form.Item {...restField} name={[name, 'passengerType']} label="Độ tuổi" initialValue="ADULT">
+                        <Form.Item
+                          {...restField}
+                          name={[name, 'passengerType']}
+                          label="Độ tuổi"
+                          initialValue="ADULT"
+                          rules={[{ required: true, message: 'Chọn độ tuổi!' }]}
+                        >
                           <Select>
                             <Select.Option value="ADULT">Người lớn</Select.Option>
                             <Select.Option value="CHILD">Trẻ em</Select.Option>
@@ -452,7 +622,13 @@ const TourDetailPage = () => {
                         </Form.Item>
                       </Col>
                       <Col span={7}>
-                        <Form.Item {...restField} name={[name, 'gender']} label="Giới tính" initialValue="MALE">
+                        <Form.Item
+                          {...restField}
+                          name={[name, 'gender']}
+                          label="Giới tính"
+                          initialValue="MALE"
+                          rules={[{ required: true, message: 'Chọn giới tính!' }]}
+                        >
                           <Select>
                             <Select.Option value="MALE">Nam</Select.Option>
                             <Select.Option value="FEMALE">Nữ</Select.Option>
@@ -462,8 +638,16 @@ const TourDetailPage = () => {
                     </Row>
                   </Card>
                 ))}
-                <Button type="dashed" onClick={() => add({ passengerType: 'ADULT', gender: 'MALE', requiresSingleRoom: false })} block style={{ marginBottom: 15 }}>
-                  + Thêm hành khách đi cùng
+                <Button
+                  type="dashed"
+                  onClick={() => add({ passengerType: 'ADULT', gender: 'MALE', requiresSingleRoom: false })}
+                  block
+                  style={{ marginBottom: 15 }}
+                  disabled={selectedDeparture && fields.length >= selectedDeparture.availableSeats}
+                >
+                  {selectedDeparture && fields.length >= selectedDeparture.availableSeats
+                    ? `Đã đạt giới hạn số chỗ trống (${selectedDeparture.availableSeats} ghế)`
+                    : '+ Thêm hành khách đi cùng'}
                 </Button>
               </>
             )}
@@ -472,7 +656,7 @@ const TourDetailPage = () => {
           <Divider style={{ margin: '15px 0' }} />
 
           {/* VOUCHER */}
-          <h4 style={{ color: '#1677ff' }}>3. Mã giảm giá / Voucher</h4>
+          <h4 style={{ color: '#1677ff' }}>4. Mã giảm giá / Voucher</h4>
           <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
             <Input
               placeholder="VD: HE2024"
@@ -492,7 +676,7 @@ const TourDetailPage = () => {
           <Form.Item style={{ textAlign: 'right', marginBottom: 0, marginTop: 20 }}>
             <Space>
               <Button onClick={() => setIsBookingModalOpen(false)}>Hủy</Button>
-              <Button type="primary" htmlType="submit" size="large">
+              <Button type="primary" htmlType="submit" size="large" loading={submittingBooking}>
                 Xác Nhận Đặt Tour
               </Button>
             </Space>

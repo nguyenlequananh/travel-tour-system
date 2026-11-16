@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Card, Form, Input, InputNumber, DatePicker, Button, Row, Col, message, Result, Space } from 'antd';
-import { TeamOutlined, SendOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { Card, Form, Input, InputNumber, DatePicker, Button, Row, Col, message, Result } from 'antd';
+import { TeamOutlined, SendOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import axiosClient from '../../api/axiosClient';
+import customTourService from '../../services/customTourService';
 
 const CustomTourRequestPage = () => {
   const [form] = Form.useForm();
@@ -28,7 +28,7 @@ const CustomTourRequestPage = () => {
         specialRequirements: values.specialRequirements || null,
       };
 
-      await axiosClient.post('/custom-tours', payload);
+      await customTourService.submitRequest(payload);
       setIsSuccess(true);
       form.resetFields();
     } catch (err) {

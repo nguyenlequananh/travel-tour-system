@@ -1,7 +1,9 @@
 package com.travelhub.controller.admin;
 
 import com.travelhub.dto.request.PaymentCreateRequest;
+import com.travelhub.dto.request.PaymentFilterRequest;
 import com.travelhub.dto.response.ApiResponse;
+import com.travelhub.dto.response.PageResponse;
 import com.travelhub.dto.response.PaymentResponse;
 import com.travelhub.service.PaymentService;
 import jakarta.validation.Valid;
@@ -56,6 +58,15 @@ public class AdminPaymentController {
                 .status(201)
                 .message("Ghi nhận thanh toán thành công")
                 .data(paymentService.processPayment(request))
+                .build());
+    }
+    @GetMapping("/filter")
+    public ResponseEntity<ApiResponse<PageResponse<PaymentResponse>>> getPaymentsWithFilter(
+            PaymentFilterRequest request) {
+        return ResponseEntity.ok(ApiResponse.<PageResponse<PaymentResponse>>builder()
+                .status(200)
+                .message("Lấy danh sách thanh toán phân trang thành công")
+                .data(paymentService.getPaymentsWithFilter(request))
                 .build());
     }
 }

@@ -1,7 +1,10 @@
 package com.travelhub.service;
+import com.travelhub.dto.request.PromotionFilterRequest;
 import com.travelhub.dto.request.PromotionRequest;
 import com.travelhub.entity.Promotion;
 import java.util.List;
+
+import com.travelhub.dto.response.PageResponse;
 import com.travelhub.dto.response.PromotionAdminResponse;
 public interface PromotionService {
     List<PromotionAdminResponse> getAllPromotions();
@@ -10,4 +13,5 @@ public interface PromotionService {
     PromotionAdminResponse updatePromotion(Long id, PromotionRequest request);
     void deletePromotion(Long id);
     PromotionAdminResponse getPromotionByCode(String code);
+    PageResponse<PromotionAdminResponse> getPromotionsWithFilter(PromotionFilterRequest request);
 }

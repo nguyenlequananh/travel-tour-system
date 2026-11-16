@@ -17,7 +17,8 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Booking {
+@AttributeOverride(name = "createdAt", column = @Column(name = "booking_date", updatable = false))
+public class Booking extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -40,10 +41,6 @@ public class Booking {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "promotion_id")
     private Promotion promotion;
-
-    @Column(name = "booking_date")
-    @Builder.Default
-    private LocalDateTime bookingDate = LocalDateTime.now();
 
     // Thông tin người liên hệ nhận vé (Snapshot)
     @Column(name = "contact_name", nullable = false, length = 100)
@@ -76,6 +73,10 @@ public class Booking {
     @Column(name = "payment_status", nullable = false)
     @Builder.Default
     private PaymentStatus paymentStatus = PaymentStatus.UNPAID;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "pickup_point_id")
+    private TourPickupPoint pickupPoint;
 
     @OneToMany(mappedBy = "booking")
     @Builder.Default

@@ -1,7 +1,9 @@
 package com.travelhub.controller.admin;
 
+import com.travelhub.dto.request.CustomTourFilterRequest;
 import com.travelhub.dto.response.ApiResponse;
 import com.travelhub.dto.response.CustomTourResponse;
+import com.travelhub.dto.response.PageResponse;
 import com.travelhub.enums.CustomTourStatus;
 import com.travelhub.service.CustomTourService;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +46,15 @@ public class AdminCustomTourController {
                 .status(200)
                 .message("Cập nhật trạng thái xử lý thành công")
                 .data(customTourService.updateStatus(id, status))
+                .build());
+    }
+    @GetMapping("/filter")
+    public ResponseEntity<ApiResponse<PageResponse<CustomTourResponse>>> getRequestsWithFilter(
+            CustomTourFilterRequest request) {
+        return ResponseEntity.ok(ApiResponse.<PageResponse<CustomTourResponse>>builder()
+                .status(200)
+                .message("Lấy danh sách yêu cầu tour đoàn phân trang thành công")
+                .data(customTourService.getRequestsWithFilter(request))
                 .build());
     }
 }

@@ -1,21 +1,55 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Tag, Select, Button, Modal, Descriptions, message, Space, Card } from 'antd';
-import { TeamOutlined, EyeOutlined, PhoneOutlined, MailOutlined } from '@ant-design/icons';
+import {
+  Table, Tag, Select, Button, Modal, Descriptions, message, Space, Card,
+  Row, Col, Input, Divider
+} from 'antd';
+import {
+  TeamOutlined, EyeOutlined, PhoneOutlined, MailOutlined,
+  SearchOutlined, ReloadOutlined, CalendarOutlined,
+  CheckCircleOutlined
+} from '@ant-design/icons';
 import dayjs from 'dayjs';
-import axiosClient from '../api/axiosClient';
+import { customTourService } from '../services';
 
 const CustomTourManagement = () => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
+
+  // Bộ lọc tìm kiếm
+  const [keyword, setKeyword] = useState('');
+  const [status, setStatus] = useState(undefined);
+
+  // Modal xem chi tiết
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
-  // 1. Tải danh sách yêu cầu tour đoàn
-  const fetchRequests = async () => {
+  const fetchRequests = async (page = 0, size = 10) => {
     setLoading(true);
     try {
-      const res = await axiosClient.get('/admin/custom-tours');
-      setRequests(res.data || []);
+      const params = {
+        page,
+        size,
+        sortBy: 'id',
+        order: 'DESC',
+        keyword: keyword?.trim() || undefined,
+        status: status || undefined,
+      };
+
+      const res = await customTourService.getAdminRequests(params);
+      const pageData = res.data;
+
+      setRequests(pageData.data || []);
+      setPagination({
+        current: pageData.pageNumber + 1,
+        pageSize: pageData.pageSize,
+        total: pageData.totalElements,
+      });
+
+      if (selectedRequest) {
+        const updated = pageData.data?.find((item) => item.id === selectedRequest.id);
+        if (updated) setSelectedRequest(updated);
+      }
     } catch (err) {
       message.error(err.message || 'Lỗi tải danh sách yêu cầu tour đoàn!');
     } finally {
@@ -24,17 +58,50 @@ const CustomTourManagement = () => {
   };
 
   useEffect(() => {
-    fetchRequests();
+    fetchRequests(0, pagination.pageSize);
   }, []);
 
-  // 2. Đổi trạng thái xử lý yêu cầu (PATCH /status)
+  const handleSearch = () => {
+    fetchRequests(0, pagination.pageSize);
+  };
+
+  const handleReset = () => {
+    setKeyword('');
+    setStatus(undefined);
+    setTimeout(() => {
+      fetchRequests(0, pagination.pageSize);
+    }, 0);
+  };
+
+  const handleTableChange = (pagin) => {
+    fetchRequests(pagin.current - 1, pagin.pageSize);
+  };
+
   const handleUpdateStatus = async (id, newStatus) => {
     try {
-      await axiosClient.patch(`/admin/custom-tours/${id}/status?status=${newStatus}`);
+      await customTourService.updateStatus(id, newStatus);
       message.success('Cập nhật trạng thái xử lý thành công!');
-      fetchRequests();
+      fetchRequests(pagination.current - 1, pagination.pageSize);
+      if (selectedRequest && selectedRequest.id === id) {
+        setSelectedRequest((prev) => ({ ...prev, status: newStatus }));
+      }
     } catch (err) {
       message.error(err.message || 'Lỗi khi cập nhật trạng thái!');
+    }
+  };
+
+  const renderStatusTag = (st) => {
+    switch (st) {
+      case 'NEW':
+        return <Tag color="blue">Mới tạo (NEW)</Tag>;
+      case 'CONTACTED':
+        return <Tag color="orange">Đã gọi điện tư vấn</Tag>;
+      case 'QUOTED':
+        return <Tag color="purple">Đã gửi báo giá</Tag>;
+      case 'CLOSED':
+        return <Tag color="green">Đã chốt / Đóng</Tag>;
+      default:
+        return <Tag>{st}</Tag>;
     }
   };
 
@@ -70,7 +137,7 @@ const CustomTourManagement = () => {
       title: 'Ngày đi dự kiến',
       dataIndex: 'departureDate',
       key: 'departureDate',
-      render: (d) => dayjs(d).format('DD/MM/YYYY'),
+      render: (d) => (d ? dayjs(d).format('DD/MM/YYYY') : '—'),
     },
     {
       title: 'Ngân sách / người',
@@ -81,7 +148,7 @@ const CustomTourManagement = () => {
           <strong style={{ color: '#52c41a' }}>
             {Number(amount).toLocaleString('vi-VN')} đ
           </strong>
-        ) : <span style={{ color: '#aaa' }}>Thỏa thuận</span>
+        ) : <span style={{ color: '#888' }}>Thỏa thuận</span>
       ),
     },
     {
@@ -90,21 +157,23 @@ const CustomTourManagement = () => {
       render: (_, r) => (
         <Select
           value={r.status}
-          style={{ width: 140 }}
-          onChange={(val) => handleUpdateStatus(r.id, val)}
+          style={{ width: 175 }}
+          onChange={(newVal) => handleUpdateStatus(r.id, newVal)}
         >
-          <Select.Option value="NEW">Mới tạo (NEW)</Select.Option>
-          <Select.Option value="CONTACTED">Đã gọi điện</Select.Option>
+          <Select.Option value="NEW">Mới nhận (NEW)</Select.Option>
+          <Select.Option value="CONTACTED">Đã liên hệ tư vấn</Select.Option>
           <Select.Option value="QUOTED">Đã gửi báo giá</Select.Option>
           <Select.Option value="CLOSED">Đã chốt / Đóng</Select.Option>
         </Select>
       ),
     },
     {
-      title: 'Hành động',
+      title: 'Thao tác',
       key: 'action',
       render: (_, record) => (
         <Button
+          type="primary"
+          ghost
           icon={<EyeOutlined />}
           size="small"
           onClick={() => {
@@ -120,51 +189,121 @@ const CustomTourManagement = () => {
 
   return (
     <div>
-      <div style={{ marginBottom: 16 }}>
-        <h2><TeamOutlined style={{ color: '#1677ff', marginRight: 8 }} /> Quản lý Yêu Cầu Tour Đoàn & Doanh Nghiệp (B2B)</h2>
-        <span style={{ color: '#888' }}>Danh sách các công ty, đoàn thể gửi yêu cầu thiết kế tour riêng</span>
-      </div>
+      <Card style={{ marginBottom: 16 }}>
+        <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
+          <Col>
+            <h2 style={{ margin: 0 }}>
+              <TeamOutlined style={{ marginRight: 8, color: '#1677ff' }} />
+              Quản lý Yêu Cầu Thiết Kế Tour Đoàn
+            </h2>
+          </Col>
+        </Row>
 
-      <Card>
-        <Table
-          columns={columns}
-          dataSource={requests}
-          rowKey="id"
-          loading={loading}
-          pagination={{ pageSize: 8 }}
-        />
+        <Row gutter={[12, 12]} align="middle">
+          <Col xs={24} sm={12} md={10}>
+            <Input
+              placeholder="Tìm theo tên khách, sđt, email hoặc điểm đến..."
+              prefix={<SearchOutlined />}
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              onPressEnter={handleSearch}
+              allowClear
+            />
+          </Col>
+          <Col xs={12} sm={6} md={6}>
+            <Select
+              style={{ width: '100%' }}
+              placeholder="-- Lọc trạng thái --"
+              value={status}
+              onChange={(val) => setStatus(val)}
+              allowClear
+            >
+              <Select.Option value="NEW">Mới nhận (NEW)</Select.Option>
+              <Select.Option value="CONTACTED">Đã liên hệ tư vấn</Select.Option>
+              <Select.Option value="QUOTED">Đã gửi báo giá</Select.Option>
+              <Select.Option value="CLOSED">Đã chốt / Đóng</Select.Option>
+            </Select>
+          </Col>
+          <Col xs={12} sm={6} md={6}>
+            <Space>
+              <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch}>
+                Lọc
+              </Button>
+              <Button icon={<ReloadOutlined />} onClick={handleReset}>
+                Làm mới
+              </Button>
+            </Space>
+          </Col>
+        </Row>
       </Card>
 
-      {/* MODAL XEM CHI TIẾT YÊU CẦU ĐẶC BIỆT */}
+      <Table
+        columns={columns}
+        dataSource={requests}
+        rowKey="id"
+        loading={loading}
+        pagination={pagination}
+        onChange={handleTableChange}
+      />
+
+      {/* MODAL CHI TIẾT YÊU CẦU TOUR ĐOÀN */}
       <Modal
-        title={`Chi tiết yêu cầu của: ${selectedRequest?.fullName}`}
+        title={`Chi tiết yêu cầu tour đoàn #${selectedRequest?.id}`}
         open={isDetailOpen}
         onCancel={() => setIsDetailOpen(false)}
+        width={700}
         footer={[
-          <Button key="close" type="primary" onClick={() => setIsDetailOpen(false)}>
+          <Button key="close" onClick={() => setIsDetailOpen(false)}>
             Đóng
           </Button>,
         ]}
-        width={650}
       >
         {selectedRequest && (
-          <Descriptions bordered column={2} size="small" style={{ marginTop: 15 }}>
-            <Descriptions.Item label="Người liên hệ">{selectedRequest.fullName}</Descriptions.Item>
-            <Descriptions.Item label="Số điện thoại">{selectedRequest.phoneNumber}</Descriptions.Item>
-            <Descriptions.Item label="Email" span={2}>{selectedRequest.email}</Descriptions.Item>
-            <Descriptions.Item label="Điểm đến">{selectedRequest.destination}</Descriptions.Item>
-            <Descriptions.Item label="Ngày đi">{dayjs(selectedRequest.departureDate).format('DD/MM/YYYY')}</Descriptions.Item>
-            <Descriptions.Item label="Số lượng khách">{selectedRequest.estimatedGuests} người</Descriptions.Item>
-            <Descriptions.Item label="Thời lượng">{selectedRequest.estimatedDurationDays} ngày</Descriptions.Item>
-            <Descriptions.Item label="Ngân sách dự kiến" span={2}>
-              {selectedRequest.budgetPerPerson ? `${Number(selectedRequest.budgetPerPerson).toLocaleString()} đ/người` : 'Thỏa thuận'}
-            </Descriptions.Item>
-            <Descriptions.Item label="Yêu cầu đặc biệt (Team building, Gala...)" span={2}>
-              <div style={{ background: '#f5f5f5', padding: 10, borderRadius: 6, minHeight: 60 }}>
-                {selectedRequest.specialRequirements || 'Không có yêu cầu đặc biệt.'}
-              </div>
-            </Descriptions.Item>
-          </Descriptions>
+          <div>
+            <Descriptions bordered size="small" column={2}>
+              <Descriptions.Item label="Người liên hệ">{selectedRequest.fullName}</Descriptions.Item>
+              <Descriptions.Item label="Số điện thoại">{selectedRequest.phoneNumber}</Descriptions.Item>
+              <Descriptions.Item label="Email" span={2}>{selectedRequest.email}</Descriptions.Item>
+              <Descriptions.Item label="Điểm đến">{selectedRequest.destination}</Descriptions.Item>
+              <Descriptions.Item label="Ngày khởi hành dự kiến">
+                {selectedRequest.departureDate ? dayjs(selectedRequest.departureDate).format('DD/MM/YYYY') : '—'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Số lượng khách">{selectedRequest.estimatedGuests} người</Descriptions.Item>
+              <Descriptions.Item label="Thời gian đi">{selectedRequest.estimatedDurationDays} ngày</Descriptions.Item>
+              <Descriptions.Item label="Ngân sách dự kiến">
+                {selectedRequest.budgetPerPerson
+                  ? `${Number(selectedRequest.budgetPerPerson).toLocaleString('vi-VN')} đ / người`
+                  : 'Thỏa thuận'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Trạng thái">
+                {renderStatusTag(selectedRequest.status)}
+              </Descriptions.Item>
+              <Descriptions.Item label="Yêu cầu đặc biệt" span={2}>
+                <div style={{ whiteSpace: 'pre-wrap', background: '#fafafa', padding: 8, borderRadius: 4 }}>
+                  {selectedRequest.specialRequirements || 'Không có yêu cầu riêng.'}
+                </div>
+              </Descriptions.Item>
+              <Descriptions.Item label="Thời gian gửi form" span={2}>
+                {dayjs(selectedRequest.createdAt).format('DD/MM/YYYY HH:mm:ss')}
+              </Descriptions.Item>
+            </Descriptions>
+
+            <Divider style={{ margin: '16px 0' }} />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span>Cập nhật nhanh tiến độ:</span>
+              <Space>
+                <Button size="small" onClick={() => handleUpdateStatus(selectedRequest.id, 'CONTACTED')}>
+                  Đã liên hệ
+                </Button>
+                <Button size="small" onClick={() => handleUpdateStatus(selectedRequest.id, 'QUOTED')}>
+                  Đã báo giá
+                </Button>
+                <Button size="small" type="primary" onClick={() => handleUpdateStatus(selectedRequest.id, 'CLOSED')}>
+                  Chốt đơn
+                </Button>
+              </Space>
+            </div>
+          </div>
         )}
       </Modal>
     </div>

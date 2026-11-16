@@ -15,7 +15,7 @@ import java.util.Set;
 @AllArgsConstructor
 @Builder
 @ToString
-public class User {
+public class User extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,9 +41,6 @@ public class User {
     @Builder.Default
     private Boolean isActive = true;
 
-    @Column(name = "created_at")
-    @Builder.Default
-    private LocalDateTime createdAt = LocalDateTime.now();
 
     // ================= BỔ SUNG QUAN HỆ NHIỀU - NHIỀU VỚI ROLE =================
     @ManyToMany(fetch = FetchType.EAGER) // EAGER để khi đăng nhập là lấy luôn quyền

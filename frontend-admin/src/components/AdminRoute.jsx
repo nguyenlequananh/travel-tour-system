@@ -1,22 +1,16 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { message } from 'antd';
+import { useAuth } from '../context/AuthContext';
 
 const AdminRoute = () => {
-  // 1. Đọc thông tin người dùng từ localStorage
-  const savedUser = JSON.parse(localStorage.getItem('travel_user') || '{}');
-  const roles = savedUser.roles || [];
+  const { isAuthenticated, isAdmin } = useAuth();
 
-  // 2. KIỂM TRA QUYỀN HẠN
-  const isAdmin = roles.includes('ROLE_ADMIN');
-
-  if (!isAdmin) {
-    // Nếu chưa đăng nhập hoặc không phải Admin -> Báo lỗi đỏ và đá về Trang chủ!
+  if (!isAuthenticated || !isAdmin) {
     message.error('Bạn không có quyền truy cập vào khu vực Quản trị viên!');
     return <Navigate to="/" replace />;
   }
 
-  // 3. Nếu ĐÚNG LÀ ADMIN -> Cho phép vào các trang quản trị bên trong!
   return <Outlet />;
 };
 

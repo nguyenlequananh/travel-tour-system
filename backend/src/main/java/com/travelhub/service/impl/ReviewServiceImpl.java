@@ -1,6 +1,8 @@
 package com.travelhub.service.impl;
 
+import com.travelhub.dto.request.ReviewFilterRequest;
 import com.travelhub.dto.request.ReviewRequest;
+import com.travelhub.dto.response.PageResponse;
 import com.travelhub.dto.response.ReviewResponse;
 import com.travelhub.entity.Review;
 import com.travelhub.entity.Tour;
@@ -10,6 +12,9 @@ import com.travelhub.repository.TourRepository;
 import com.travelhub.repository.UserRepository;
 import com.travelhub.service.ReviewService;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -64,7 +69,6 @@ public class ReviewServiceImpl implements ReviewService {
                 .tour(tour)
                 .rating(request.getRating())
                 .comment(request.getComment().trim())
-                .createdAt(LocalDateTime.now())
                 .build();
 
         return ReviewResponse.fromEntity(reviewRepository.save(review));
@@ -74,5 +78,20 @@ public class ReviewServiceImpl implements ReviewService {
     @Transactional(readOnly = true)
     public Double getAverageRating(Long tourId) {
         return reviewRepository.getAverageRatingByTourId(tourId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<ReviewResponse> getReviewsWithFilter(ReviewFilterRequest request) {
+        Pageable pageable = request.toPageable();
+
+        String keyword = (request.getKeyword() != null && !request.getKeyword().trim().isEmpty())
+                ? request.getKeyword().trim()
+                : null;
+
+        Page<Review> reviewPage = reviewRepository.filterReviews(keyword, request.getRating(), request.getTourId(),
+                pageable);
+
+        return PageResponse.fromPage(reviewPage, ReviewResponse::fromEntity);
     }
 }

@@ -1,7 +1,9 @@
 package com.travelhub.controller.admin;
 
+import com.travelhub.dto.request.PromotionFilterRequest;
 import com.travelhub.dto.request.PromotionRequest;
 import com.travelhub.dto.response.ApiResponse;
+import com.travelhub.dto.response.PageResponse;
 import com.travelhub.dto.response.PromotionAdminResponse;
 import com.travelhub.service.PromotionService;
 import jakarta.validation.Valid;
@@ -63,5 +65,18 @@ public class AdminPromotionController {
                 .data(null)
                 .build();
         return ResponseEntity.ok(response);
+    }
+    // BỔ SUNG ENDPOINT PHÂN TRANG CHO PROMOTIONS
+    @GetMapping("/filter")
+    public ResponseEntity<ApiResponse<PageResponse<PromotionAdminResponse>>> getPromotionsWithFilter(
+            PromotionFilterRequest request) {
+        
+        PageResponse<PromotionAdminResponse> response = promotionService.getPromotionsWithFilter(request);
+
+        return ResponseEntity.ok(ApiResponse.<PageResponse<PromotionAdminResponse>>builder()
+                .status(200)
+                .message("Lấy danh sách khuyến mãi phân trang thành công")
+                .data(response)
+                .build());
     }
 }

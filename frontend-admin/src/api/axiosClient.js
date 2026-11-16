@@ -1,7 +1,12 @@
 import axios from 'axios';
 
+// Tự động nhận diện: Khi chạy dev cục bộ thì gọi port 8081, khi deploy Production qua Nginx thì gọi relative path /api/v1
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (
+  window.location.hostname === 'localhost' ? 'http://localhost:8081/api/v1' : '/api/v1'
+);
+
 const axiosClient = axios.create({
-  baseURL: 'http://localhost:8081/api/v1',
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },

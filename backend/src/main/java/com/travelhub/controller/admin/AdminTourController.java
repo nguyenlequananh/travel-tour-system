@@ -74,5 +74,17 @@ public class AdminTourController {
                 .data(null)
                 .build());
     }
+    @GetMapping("/filter")
+    public ResponseEntity<ApiResponse<PageResponse<TourAdminResponse>>> getToursWithFilter(
+            TourFilterRequest request) {
+        
+        PageResponse<TourAdminResponse> response = tourService.getToursWithFilter(request);
+
+        return ResponseEntity.ok(ApiResponse.<PageResponse<TourAdminResponse>>builder()
+                .status(200)
+                .message("Lấy danh sách tour phân trang thành công")
+                .data(response)
+                .build());
+    }
    
 }

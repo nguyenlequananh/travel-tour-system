@@ -1,36 +1,47 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Tag, Button, Popconfirm, message, Space } from 'antd';
+import { Table, Tag, Button, Popconfirm, message, Space, Card } from 'antd';
 import { RollbackOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import axiosClient from '../api/axiosClient';
+import { cancellationService } from '../services';
 
 const CancellationManagement = () => {
   const [cancellations, setCancellations] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
 
-  // 1. Lấy danh sách yêu cầu hủy
-  const fetchCancellations = async () => {
+  const fetchCancellations = async (page = 0, size = 10) => {
     setLoading(true);
     try {
-      const res = await axiosClient.get('/admin/cancellations');
-      setCancellations(res.data || []);
+      const params = { page, size, sortBy: 'id', order: 'DESC' };
+      const res = await cancellationService.getCancellations(params);
+      const pageData = res.data;
+
+      setCancellations(pageData.data || []);
+      setPagination({
+        current: pageData.pageNumber + 1,
+        pageSize: pageData.pageSize,
+        total: pageData.totalElements,
+      });
     } catch (err) {
-      message.error(err.message);
+      message.error(err.message || 'Lỗi tải danh sách yêu cầu hủy!');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchCancellations();
+    fetchCancellations(0, pagination.pageSize);
   }, []);
 
-  // 2. Xác nhận đã hoàn tiền cho khách (Kế toán bấm)
+  const handleTableChange = (pagin) => {
+    fetchCancellations(pagin.current - 1, pagin.pageSize);
+  };
+
   const handleConfirmRefund = async (id) => {
     try {
-      await axiosClient.patch(`/admin/cancellations/${id}/confirm-refund`);
-      message.success('Đã xác nhận hoàn tiền thành công!');
-      fetchCancellations();
+      await cancellationService.confirmRefund(id);
+      message.success('Đã xác nhận hoàn tiền và kích hoạt gửi email thông báo thành công!');
+      fetchCancellations(pagination.current - 1, pagination.pageSize);
     } catch (err) {
       message.error(err.message);
     }
@@ -98,6 +109,7 @@ const CancellationManagement = () => {
           {record.status !== 'REFUNDED' ? (
             <Popconfirm
               title="Bạn đã chuyển tiền hoàn cho khách và muốn xác nhận hoàn tất?"
+              description="Hệ thống sẽ kích hoạt RabbitMQ gửi email biên lai hoàn tiền cho khách hàng."
               onConfirm={() => handleConfirmRefund(record.id)}
               okText="Đã chuyển tiền"
               cancelText="Hủy"
@@ -116,18 +128,20 @@ const CancellationManagement = () => {
 
   return (
     <div>
-      <div style={{ marginBottom: 16 }}>
-        <h2>
-          <RollbackOutlined style={{ marginRight: 8 }} /> Xử lý Hủy Tour & Hoàn Tiền
+      <Card style={{ marginBottom: 16 }}>
+        <h2 style={{ margin: 0 }}>
+          <RollbackOutlined style={{ marginRight: 8, color: '#ff4d4f' }} />
+          Xử lý Hủy Tour & Hoàn Tiền
         </h2>
-      </div>
+      </Card>
 
       <Table
         columns={columns}
         dataSource={cancellations}
         rowKey="id"
         loading={loading}
-        pagination={{ pageSize: 8 }}
+        pagination={pagination}
+        onChange={handleTableChange}
       />
     </div>
   );

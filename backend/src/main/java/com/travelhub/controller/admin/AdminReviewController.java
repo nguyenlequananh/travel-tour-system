@@ -1,6 +1,8 @@
 package com.travelhub.controller.admin;
 
+import com.travelhub.dto.request.ReviewFilterRequest;
 import com.travelhub.dto.response.ApiResponse;
+import com.travelhub.dto.response.PageResponse;
 import com.travelhub.dto.response.ReviewResponse;
 import com.travelhub.service.ReviewService;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +38,18 @@ public class AdminReviewController {
                 .status(200)
                 .message("Xóa đánh giá thành công")
                 .data(null)
+                .build());
+    }
+    @GetMapping("/filter")
+    public ResponseEntity<ApiResponse<PageResponse<ReviewResponse>>> getReviewsWithFilter(
+            ReviewFilterRequest request) {
+        
+        PageResponse<ReviewResponse> response = reviewService.getReviewsWithFilter(request);
+
+        return ResponseEntity.ok(ApiResponse.<PageResponse<ReviewResponse>>builder()
+                .status(200)
+                .message("Lấy danh sách đánh giá phân trang thành công")
+                .data(response)
                 .build());
     }
 }
