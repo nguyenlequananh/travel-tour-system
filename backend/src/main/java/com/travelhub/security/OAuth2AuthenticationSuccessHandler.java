@@ -7,6 +7,7 @@ import com.travelhub.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -25,6 +26,9 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     private final JwtUtils jwtUtils;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+
+    @Value("${app.oauth2.redirect-uri:http://localhost:5173/oauth2/redirect}")
+    private String oauth2RedirectUri;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -54,7 +58,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         String token = jwtUtils.generateToken(user);
 
         // 4. Chuyển hướng về lại giao diện React kèm Token trên đường link
-        String redirectUrl = "http://localhost:5173/oauth2/redirect?token=" + token;
+        String redirectUrl = oauth2RedirectUri + "?token=" + token;
         getRedirectStrategy().sendRedirect(request, response, redirectUrl);
     }
 }

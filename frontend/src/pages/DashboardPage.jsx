@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Row, Col, Statistic, Table, Tag, Select, Progress, message, Spin } from 'antd';
+import { Card, Row, Col, Statistic, Table, Tag, Select, Progress, message, Spin, Button, Space } from 'antd';
 import {
   DollarCircleOutlined,
   ShoppingOutlined,
@@ -7,13 +7,28 @@ import {
   CompassOutlined,
   TrophyOutlined,
   BarChartOutlined,
+  FileExcelOutlined,
 } from '@ant-design/icons';
-import { dashboardService } from '../services';
+import { dashboardService, exportService } from '../services';
 
 const DashboardPage = () => {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState(null);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [exporting, setExporting] = useState(false);
+
+  const handleExportFinancialReport = async () => {
+    setExporting(true);
+    try {
+      await exportService.exportFinancialReport(selectedMonth, selectedYear);
+      message.success(`Đã xuất báo cáo tài chính Tháng ${selectedMonth}/${selectedYear} thành công!`);
+    } catch (err) {
+      message.error(err.message || 'Lỗi khi xuất file Excel báo cáo tài chính!');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const fetchDashboardStats = async (year) => {
     setLoading(true);
@@ -95,13 +110,30 @@ const DashboardPage = () => {
             </h2>
           </Col>
           <Col>
-            <Space align="center">
-              <span style={{ fontWeight: 500 }}>Năm xem báo cáo:</span>
-              <Select value={selectedYear} style={{ width: 120 }} onChange={(val) => setSelectedYear(val)}>
+            <Space align="center" wrap>
+              <span style={{ fontWeight: 500 }}>Tháng:</span>
+              <Select value={selectedMonth} style={{ width: 105 }} onChange={(val) => setSelectedMonth(val)}>
+                {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                  <Select.Option key={m} value={m}>Tháng {m}</Select.Option>
+                ))}
+              </Select>
+
+              <span style={{ fontWeight: 500 }}>Năm:</span>
+              <Select value={selectedYear} style={{ width: 105 }} onChange={(val) => setSelectedYear(val)}>
                 <Select.Option value={2026}>Năm 2026</Select.Option>
                 <Select.Option value={2025}>Năm 2025</Select.Option>
                 <Select.Option value={2024}>Năm 2024</Select.Option>
               </Select>
+
+              <Button
+                type="primary"
+                icon={<FileExcelOutlined />}
+                style={{ backgroundColor: '#52c41a', borderColor: '#52c41a', fontWeight: 600 }}
+                loading={exporting}
+                onClick={handleExportFinancialReport}
+              >
+                Xuất Excel Tài Chính
+              </Button>
             </Space>
           </Col>
         </Row>

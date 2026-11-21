@@ -1,0 +1,52 @@
+### =========================================================================
+### TRAVELHUB - BỘ TEST HTTP CHO TÍNH NĂNG TRỢ LÝ ẢO TƯ VẤN TOUR AI (GEMINI)
+### Endpoint: POST http://localhost:8081/api/v1/ai/chat
+### =========================================================================
+
+### 1. TEST TƯ VẤN TOUR NGHỈ DƯỠNG BIỂN ĐẢO (TP.HCM -> Phú Quốc / Nha Trang)
+POST http://localhost:8081/api/v1/ai/chat
+Content-Type: application/json
+
+{
+  "message": "Tôi ở TP.HCM, muốn đi du lịch biển khoảng 3 ngày cùng gia đình dịp cuối tuần này thì có tour nào thích hợp không?"
+}
+
+###
+
+### 2. TEST TƯ VẤN TOUR NÚI CAO / SĂN MÂY (Hà Nội -> Sapa / Hà Giang)
+POST http://localhost:8081/api/v1/ai/chat
+Content-Type: application/json
+
+{
+  "message": "Mình ở Hà Nội, thích ngắm cảnh thiên nhiên hùng vĩ và đi săn mây vùng Tây Bắc, bạn gợi ý giúp mình nhé!"
+}
+
+###
+
+### 3. TEST TƯ VẤN TOUR TIẾT KIỆM NGÂN SÁCH (Dưới 2 triệu)
+POST http://localhost:8081/api/v1/ai/chat
+Content-Type: application/json
+
+{
+  "message": "Sinh viên muốn đi chơi 2 ngày 1 đêm với ngân sách tiết kiệm dưới 2 triệu thì nên đi đâu vậy TravelHub?"
+}
+
+###
+
+### 4. TEST TƯ VẤN TOUR XUẤT NGOẠI / QUỐC TẾ
+POST http://localhost:8081/api/v1/ai/chat
+Content-Type: application/json
+
+{
+  "message": "Gia đình tôi có kế hoạch xuất ngoại ngắm hoa và thưởng thức ẩm thực, TravelHub có tour quốc tế nào hot nhất hiện nay?"
+}
+
+###
+
+### 5. TEST VALIDATION DỮ LIỆU ĐẦU VÀO (Gửi tin nhắn rỗng -> Kỳ vọng lỗi 400 Bad Request)
+POST http://localhost:8081/api/v1/ai/chat
+Content-Type: application/json
+
+{
+  "message": ""
+}

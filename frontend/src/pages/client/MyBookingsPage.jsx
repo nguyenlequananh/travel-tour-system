@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Tag, Button, Modal, Form, Input, message, Space, Card, Empty } from 'antd';
-import { ShoppingOutlined, RollbackOutlined, CreditCardOutlined, CalendarOutlined, TeamOutlined } from '@ant-design/icons';
+import { ShoppingOutlined, RollbackOutlined, CreditCardOutlined, CalendarOutlined, TeamOutlined, FilePdfOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import bookingService from '../../services/bookingService';
 import paymentService from '../../services/paymentService';
+import exportService from '../../services/exportService';
 import { useAuth } from '../../context/AuthContext';
 
 const MyBookingsPage = () => {
@@ -75,6 +76,17 @@ const MyBookingsPage = () => {
       window.location.href = res.data;
     } catch (err) {
       message.error({ content: err.message || 'Lỗi kết nối cổng thanh toán VNPay!', key: 'vnpay' });
+    }
+  };
+
+  // Tải vé điện tử / Hóa đơn PDF
+  const handleDownloadTicketPdf = async (bookingId) => {
+    try {
+      message.loading({ content: 'Đang tạo vé điện tử PDF...', key: 'ticket_pdf' });
+      await exportService.exportBookingTicketPdf(bookingId);
+      message.success({ content: 'Đã tải vé điện tử & hóa đơn (PDF) thành công!', key: 'ticket_pdf' });
+    } catch (err) {
+      message.error({ content: err.message || 'Lỗi khi tải file PDF vé tour!', key: 'ticket_pdf' });
     }
   };
 
@@ -150,6 +162,17 @@ const MyBookingsPage = () => {
       key: 'action',
       render: (_, record) => (
         <Space size="small">
+          {record.paymentStatus === 'PAID' && (
+            <Button
+              size="small"
+              icon={<FilePdfOutlined />}
+              style={{ color: '#d4380d', borderColor: '#ffbb96', backgroundColor: '#fff2e8', fontWeight: 500 }}
+              onClick={() => handleDownloadTicketPdf(record.id)}
+            >
+              Vé điện tử (PDF)
+            </Button>
+          )}
+
           {record.paymentStatus === 'UNPAID' && record.bookingStatus !== 'CANCELLED' && (
             <Button
               type="primary"

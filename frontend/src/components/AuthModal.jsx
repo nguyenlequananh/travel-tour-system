@@ -61,7 +61,10 @@ const AuthModal = ({ open, initialMode = 'login', onClose }) => {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = 'http://localhost:8081/oauth2/authorization/google';
+    const backendBaseUrl = import.meta.env.VITE_BACKEND_URL || (
+      window.location.hostname === 'localhost' ? 'http://localhost:8081' : ''
+    );
+    window.location.href = `${backendBaseUrl}/oauth2/authorization/google`;
   };
 
   return (

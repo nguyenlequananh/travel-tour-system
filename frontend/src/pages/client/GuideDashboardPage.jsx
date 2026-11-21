@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import {
   Card, Table, Tag, Button, Typography, Row, Col,
-  Statistic, Drawer, Checkbox, Progress, Input, message, Timeline
+  Statistic, Drawer, Checkbox, Progress, Input, message, Timeline, Space
 } from 'antd';
 import {
   TeamOutlined, CalendarOutlined, CompassOutlined, PhoneOutlined,
-  EnvironmentOutlined, ClockCircleOutlined, IdcardOutlined
+  EnvironmentOutlined, ClockCircleOutlined, IdcardOutlined, FileExcelOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import guideService from '../../services/guideService';
+import exportService from '../../services/exportService';
 
 const { Title } = Typography;
 
@@ -70,6 +71,16 @@ const GuideDashboardPage = () => {
       message.error(err.message || 'Lỗi tải danh sách đoàn khách!');
     } finally {
       setPassengerLoading(false);
+    }
+  };
+
+  // 2.1 Xuất Excel danh sách đoàn khách
+  const handleExportManifest = async (departureId) => {
+    try {
+      await exportService.exportGuideManifest(departureId, savedUser.id);
+      message.success('Đã tải file Excel danh sách đoàn thành công!');
+    } catch (err) {
+      message.error(err.message || 'Lỗi khi xuất file Excel danh sách đoàn!');
     }
   };
 
@@ -166,14 +177,24 @@ const GuideDashboardPage = () => {
       title: 'Hành động',
       key: 'action',
       render: (_, record) => (
-        <Button
-          type="primary"
-          icon={<TeamOutlined />}
-          size="small"
-          onClick={() => handleOpenManifest(record)}
-        >
-          Danh sách đoàn & Điểm danh
-        </Button>
+        <Space size="small">
+          <Button
+            type="primary"
+            icon={<TeamOutlined />}
+            size="small"
+            onClick={() => handleOpenManifest(record)}
+          >
+            Điểm danh ({record.totalGuests || 0})
+          </Button>
+          <Button
+            size="small"
+            icon={<FileExcelOutlined />}
+            style={{ backgroundColor: '#52c41a', color: '#fff', borderColor: '#52c41a' }}
+            onClick={() => handleExportManifest(record.departureId)}
+          >
+            Xuất Excel
+          </Button>
+        </Space>
       ),
     },
   ];
@@ -258,6 +279,16 @@ const GuideDashboardPage = () => {
         open={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
         destroyOnClose
+        extra={
+          <Button
+            type="primary"
+            icon={<FileExcelOutlined />}
+            style={{ backgroundColor: '#52c41a', borderColor: '#52c41a', fontWeight: 600 }}
+            onClick={() => handleExportManifest(selectedDeparture?.departureId)}
+          >
+            Xuất Excel Danh Sách Đoàn
+          </Button>
+        }
       >
         {selectedDeparture && (
           <div>

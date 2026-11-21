@@ -14,3 +14,4 @@ export { default as guideService } from './guideService';
 export { default as dashboardService } from './dashboardService';
 export { default as notificationService } from './notificationService';
 export { default as aiService } from './aiService';
+export { default as exportService } from './exportService';

@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import {
   Row, Col, Card, Tag, Button, Timeline, Modal, Form,
-  Input, Select, Space, message, Spin, Divider, Rate, List, Avatar
+  Input, Select, Space, message, Spin, Divider, Rate, List, Avatar,
+  Image
 } from 'antd';
 import {
   CalendarOutlined, EnvironmentOutlined, ClockCircleOutlined,
   TagOutlined, TeamOutlined, StarOutlined, UserOutlined, SendOutlined,
-  CompassOutlined
+  CompassOutlined, FileImageOutlined, FileProtectOutlined,
+  CheckCircleOutlined, CloseCircleOutlined, InfoCircleOutlined
 } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
@@ -225,7 +227,7 @@ const TourDetailPage = () => {
     );
   }
 
-  const { tour, departures, itineraries } = data;
+  const { tour, departures, itineraries, images, policies } = data;
 
   const isDepartureDisabled =
     !selectedDeparture ||
@@ -256,13 +258,39 @@ const TourDetailPage = () => {
       <Row gutter={[24, 24]}>
         {/* CỘT TRÁI (70%) */}
         <Col xs={24} lg={16}>
-          <div style={{ borderRadius: 12, overflow: 'hidden', height: 380, marginBottom: 25 }}>
+          <div style={{ borderRadius: 12, overflow: 'hidden', height: 380, marginBottom: 15 }}>
             <img
               src={tour.featuredImage?.startsWith('http') ? tour.featuredImage : 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800'}
               alt={tour.name}
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
           </div>
+
+          {/* ALBUM HÌNH ẢNH PHỤ */}
+          {images && images.length > 0 && (
+            <Card
+              size="small"
+              title={<><FileImageOutlined style={{ color: '#13c2c2', marginRight: 8 }} /> Album hình ảnh chuyến đi ({images.length} ảnh)</>}
+              style={{ marginBottom: 25, borderRadius: 10 }}
+            >
+              <Image.PreviewGroup>
+                <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 6 }}>
+                  {images.map((img) => (
+                    <div key={img.id} style={{ flexShrink: 0 }}>
+                      <Image
+                        src={img.imageUrl}
+                        alt="Ảnh tour"
+                        width={130}
+                        height={85}
+                        style={{ objectFit: 'cover', borderRadius: 8, border: '1px solid #eee' }}
+                        fallback="https://via.placeholder.com/130x85?text=Loi+Anh"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </Image.PreviewGroup>
+            </Card>
+          )}
 
           {/* CÁC ĐỢT KHỞI HÀNH */}
           <Card title={<><CalendarOutlined style={{ color: '#1677ff', marginRight: 8 }} /> Các đợt khởi hành đang mở bán (Chọn ngày đi)</>} style={{ marginBottom: 25 }}>
@@ -349,6 +377,63 @@ const TourDetailPage = () => {
               />
             ) : (
               <p style={{ color: '#888' }}>Lịch trình chi tiết đang được cập nhật...</p>
+            )}
+          </Card>
+
+          {/* CHÍNH SÁCH VÀ ĐIỀU KHOẢN CHUYẾN ĐI */}
+          <Card
+            title={<><FileProtectOutlined style={{ color: '#722ed1', marginRight: 8 }} /> Chính sách & Điều khoản chuyến đi</>}
+            style={{ marginBottom: 25, borderRadius: 10 }}
+          >
+            {policies && policies.length > 0 ? (
+              <Row gutter={[16, 16]}>
+                <Col xs={24} md={12}>
+                  <Card size="small" style={{ background: '#f6ffed', borderColor: '#b7eb8f', height: '100%', borderRadius: 8 }}>
+                    <h4 style={{ color: '#389e0d', marginBottom: 10 }}>
+                      <CheckCircleOutlined style={{ marginRight: 6 }} /> Giá tour bao gồm:
+                    </h4>
+                    <ul style={{ paddingLeft: 20, margin: 0, color: '#333' }}>
+                      {policies.filter((p) => p.policyType === 'INCLUDED').map((p) => (
+                        <li key={p.id} style={{ marginBottom: 6 }}>{p.content}</li>
+                      ))}
+                      {policies.filter((p) => p.policyType === 'INCLUDED').length === 0 && (
+                        <li style={{ color: '#888' }}>Theo quy định tiêu chuẩn của công ty</li>
+                      )}
+                    </ul>
+                  </Card>
+                </Col>
+                <Col xs={24} md={12}>
+                  <Card size="small" style={{ background: '#fff2f0', borderColor: '#ffccc7', height: '100%', borderRadius: 8 }}>
+                    <h4 style={{ color: '#cf1322', marginBottom: 10 }}>
+                      <CloseCircleOutlined style={{ marginRight: 6 }} /> Giá tour không bao gồm:
+                    </h4>
+                    <ul style={{ paddingLeft: 20, margin: 0, color: '#333' }}>
+                      {policies.filter((p) => p.policyType === 'EXCLUDED').map((p) => (
+                        <li key={p.id} style={{ marginBottom: 6 }}>{p.content}</li>
+                      ))}
+                      {policies.filter((p) => p.policyType === 'EXCLUDED').length === 0 && (
+                        <li style={{ color: '#888' }}>Chi phí cá nhân ngoài chương trình</li>
+                      )}
+                    </ul>
+                  </Card>
+                </Col>
+                {policies.some((p) => p.policyType === 'POLICY_NOTE') && (
+                  <Col span={24}>
+                    <Card size="small" style={{ background: '#fffbe6', borderColor: '#ffe58f', borderRadius: 8 }}>
+                      <h4 style={{ color: '#d48806', marginBottom: 8 }}>
+                        <InfoCircleOutlined style={{ marginRight: 6 }} /> Lưu ý quan trọng & Điều kiện hoàn hủy:
+                      </h4>
+                      <ul style={{ paddingLeft: 20, margin: 0, color: '#333' }}>
+                        {policies.filter((p) => p.policyType === 'POLICY_NOTE').map((p) => (
+                          <li key={p.id} style={{ marginBottom: 6 }}>{p.content}</li>
+                        ))}
+                      </ul>
+                    </Card>
+                  </Col>
+                )}
+              </Row>
+            ) : (
+              <p style={{ color: '#888' }}>Chính sách chi tiết đang được cập nhật...</p>
             )}
           </Card>
 

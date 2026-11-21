@@ -40,29 +40,32 @@ public class AiServiceImpl implements AiService {
                     .filter(t -> t.getStatus() == TourStatus.ACTIVE)
                     .toList();
 
-            StringBuilder tourContext = new StringBuilder("Dưới đây là danh sách các tour du lịch hiện có tại TravelHub:\n");
+            StringBuilder tourContext = new StringBuilder(
+                    "Dưới đây là danh sách các tour du lịch hiện có tại TravelHub:\n");
             for (Tour t : activeTours) {
-                tourContext.append(String.format("- Mã: %s | Tên: %s | Điểm đi: %s | Điểm đến: %s | Thời gian: %d ngày %d đêm | Tóm tắt: %s\n",
-                        t.getTourCode(), t.getName(), t.getDepartureCity(), t.getDestinationCity(), t.getDurationDays(), t.getDurationNights(), t.getSummary()));
+                tourContext.append(String.format(
+                        "- Mã: %s | Tên: %s | Điểm đi: %s | Điểm đến: %s | Thời gian: %d ngày %d đêm | Tóm tắt: %s\n",
+                        t.getTourCode(), t.getName(), t.getDepartureCity(), t.getDestinationCity(), t.getDurationDays(),
+                        t.getDurationNights(), t.getSummary()));
             }
 
             // 2. Soạn Prompt
+            // Trong hàm getAiTourAdvice:
             String prompt = String.format(
-                    "Bạn là trợ lý AI thông minh của hệ thống du lịch TravelHub. Hãy tư vấn và gợi ý tour cho khách hàng một cách thân thiện, nhiệt tình bằng tiếng Việt.\n\n" +
-                    "%s\n\n" +
-                    "Câu hỏi của khách hàng: \"%s\"\n\n" +
-                    "Hãy dựa vào danh sách tour ở trên để gợi ý 1 hoặc 2 tour phù hợp nhất cho khách.",
-                    tourContext.toString(), request.getMessage()
-            );
+                    "Bạn là chuyên viên tư vấn du lịch AI cao cấp của hệ thống TravelHub.\n" +
+                            "Dưới đây là các tour hiện có sẵn:\n%s\n\n" +
+                            "Khách hàng hỏi: \"%s\"\n\n" +
+                            "Yêu cầu: Hãy trả lời nhiệt tình, lịch sự bằng tiếng Việt, gợi ý 1 hoặc 2 tour thích hợp nhất từ danh sách trên kèm lý do tại sao phù hợp.",
+                    tourContext.toString(), request.getMessage());
 
             // 3. Đóng gói JSON
             Map<String, Object> requestMap = new HashMap<>();
             Map<String, Object> partMap = new HashMap<>();
             partMap.put("text", prompt);
-            Map<String, Object>[] partsArray = new Map[]{partMap};
+            Map<String, Object>[] partsArray = new Map[] { partMap };
             Map<String, Object> contentMap = new HashMap<>();
             contentMap.put("parts", partsArray);
-            requestMap.put("contents", new Map[]{contentMap});
+            requestMap.put("contents", new Map[] { contentMap });
 
             // 4. Thiết lập Header x-goog-api-key (Dành riêng cho key dạng AQ...)
             HttpHeaders headers = new HttpHeaders();
@@ -73,7 +76,7 @@ public class AiServiceImpl implements AiService {
 
             // 5. Gọi API với model chuẩn v1 (gemini-pro) hoặc v1beta
             RestTemplate restTemplate = new RestTemplate();
-            
+
             // Dùng URL sạch không có ?key= ở cuối
             ResponseEntity<Map> responseEntity = restTemplate.postForEntity(geminiApiUrl, entity, Map.class);
             Map<String, Object> apiResponse = responseEntity.getBody();

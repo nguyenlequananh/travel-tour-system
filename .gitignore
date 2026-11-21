@@ -5,6 +5,7 @@
 
 # Backend (Spring Boot / Maven)
 **/target/
+**/bin/
 **/.mvn/
 **/*.jar
 **/*.class
@@ -16,8 +17,11 @@
 *.log
 logs/
 
-# File tạm & backup
+# File tạm, backup & biến môi trường (KHÔNG ĐẨY SECRET LÊN GIT)
 *.zip
 *_source.txt
 *.code-workspace
-.env.local
+.env
+**/.env
+.env.*
+!.env.example

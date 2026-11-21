@@ -43,6 +43,8 @@ services:
     depends_on:
       - travelhub-db
       - travelhub-rabbitmq
+    env_file:
+      - .env
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://travelhub-db:3306/travel_enterprise_db?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
@@ -59,7 +61,7 @@ services:
   # ================= 4. FRONTEND REACT (PHỤC VỤ QUA NGINX) =================
   travelhub-frontend:
     build:
-      context: ./frontend-admin
+      context: ./frontend
       dockerfile: Dockerfile
     container_name: travelhub-frontend
     restart: always
