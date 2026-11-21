@@ -383,10 +383,10 @@ const TourManagement = () => {
   ];
 
   return (
-    <Card style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+    <Card>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 18 }}>
         <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <CompassOutlined style={{ color: '#1677ff' }} /> Quản lý Tour Du Lịch
+          <CompassOutlined style={{ color: '#0d6e6e' }} /> Quản lý Tour Du Lịch
         </h2>
         <Button type="primary" icon={<PlusOutlined />} onClick={() => handleOpenModal(null)}>
           Thêm Tour Mới
@@ -394,12 +394,12 @@ const TourManagement = () => {
       </div>
 
       {/* THANH TÌM KIẾM VÀ BỘ LỌC TOUR */}
-      <Card size="small" style={{ marginBottom: 16, background: '#fafafa', borderRadius: 6 }}>
+      <div style={{ marginBottom: 18, padding: '14px 16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12 }}>
         <Row gutter={[12, 12]} align="middle">
           <Col xs={24} sm={10} md={9}>
             <Input
               placeholder="Tìm theo tên hoặc mã tour..."
-              prefix={<SearchOutlined />}
+              prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               onPressEnter={handleSearch}
@@ -442,13 +442,14 @@ const TourManagement = () => {
             </Space>
           </Col>
         </Row>
-      </Card>
+      </div>
 
       <Table
         columns={columns}
         dataSource={tours}
         rowKey="id"
         loading={loading}
+        scroll={{ x: 1050 }}
         pagination={{
           ...pagination,
           position: ['bottomCenter'],

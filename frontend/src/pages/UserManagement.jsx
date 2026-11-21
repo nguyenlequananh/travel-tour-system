@@ -177,11 +177,11 @@ const UserManagement = () => {
 
   return (
     <div>
-      <Card style={{ marginBottom: 16 }}>
-        <Row justify="space-between" align="middle">
+      <Card style={{ marginBottom: 18 }}>
+        <Row justify="space-between" align="middle" gutter={[12, 12]}>
           <Col>
-            <h2 style={{ margin: 0 }}>
-              <UserOutlined style={{ marginRight: 8, color: '#1677ff' }} />
+            <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <UserOutlined style={{ color: '#0d6e6e' }} />
               Quản lý Người dùng & Phân Quyền
             </h2>
           </Col>
@@ -193,14 +193,17 @@ const UserManagement = () => {
         </Row>
       </Card>
 
-      <Table
-        columns={columns}
-        dataSource={users}
-        rowKey="id"
-        loading={loading}
-        pagination={pagination}
-        onChange={handleTableChange}
-      />
+      <Card styles={{ body: { padding: 16 } }}>
+        <Table
+          columns={columns}
+          dataSource={users}
+          rowKey="id"
+          loading={loading}
+          scroll={{ x: 960 }}
+          pagination={pagination}
+          onChange={handleTableChange}
+        />
+      </Card>
 
       {/* MODAL THÊM / SỬA USER */}
       <Modal

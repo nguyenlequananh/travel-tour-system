@@ -1,10 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { Layout, Input, Button, Dropdown, Space } from 'antd';
+import { Layout, Button, Dropdown, Space } from 'antd';
 import {
-  CompassOutlined, UserOutlined, DownOutlined, PhoneOutlined,
-  MailOutlined, EnvironmentOutlined, GlobalOutlined, AppstoreOutlined
+  CompassOutlined,
+  UserOutlined,
+  DownOutlined,
+  PhoneOutlined,
+  MailOutlined,
+  EnvironmentOutlined,
+  GlobalOutlined,
+  AppstoreOutlined,
+  ShoppingOutlined,
+  TeamOutlined,
+  SafetyCertificateOutlined,
 } from '@ant-design/icons';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import categoryService from '../services/categoryService';
 import { useAuth } from '../context/AuthContext';
 import AiChatWidget from './AiChatWidget';
@@ -14,7 +23,6 @@ import AuthModal from './AuthModal';
 import ProfileModal from './ProfileModal';
 
 const { Header, Content, Footer } = Layout;
-const { Search } = Input;
 
 const ClientLayout = () => {
   const { isAuthenticated } = useAuth();
@@ -24,6 +32,7 @@ const ClientLayout = () => {
   const [profileModalOpen, setProfileModalOpen] = useState(false);
 
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Tải danh mục tour công khai
   useEffect(() => {
@@ -48,174 +57,272 @@ const ClientLayout = () => {
     setAuthModalOpen(true);
   };
 
-  const categoryMenuItems = categories.map((cat) => ({
-    key: cat.id,
-    label: (
-      <div style={{ padding: '6px 14px' }} onClick={() => navigate(`/?categoryId=${cat.id}`)}>
-        <AppstoreOutlined style={{ marginRight: 8, color: '#1677ff' }} />
-        {cat.name}
-      </div>
-    ),
-  }));
+  const categoryMenuItems = [
+    {
+      key: 'all',
+      label: (
+        <div
+          style={{ padding: '4px 6px', fontWeight: 600, color: '#0d6e6e' }}
+          onClick={() => navigate('/')}
+        >
+          <AppstoreOutlined style={{ marginRight: 8 }} />
+          Tất cả tour du lịch
+        </div>
+      ),
+    },
+    { type: 'divider' },
+    ...categories.map((cat) => ({
+      key: cat.id,
+      label: (
+        <div
+          style={{ padding: '4px 6px', fontWeight: 500, color: '#0f172a' }}
+          onClick={() => navigate(`/?categoryId=${cat.id}`)}
+        >
+          <EnvironmentOutlined style={{ marginRight: 8, color: '#0d6e6e' }} />
+          {cat.name}
+        </div>
+      ),
+    })),
+  ];
+
+  const isHome = location.pathname === '/' || location.pathname.startsWith('/tours');
+  const isMyBookings = location.pathname === '/my-bookings';
+  const isCustomTour = location.pathname === '/custom-tour';
 
   return (
-    <Layout style={{ minHeight: '100vh', background: '#f8f9fa' }}>
-      {/* 1. THANH HEADER CHÍNH */}
+    <Layout style={{ minHeight: '100vh', background: 'var(--th-bg)' }}>
+      {/* 1. HEADER ĐƠN GỌN, THẲNG HÀNG (ALIGNMENT + PROXIMITY) */}
       <Header
         style={{
-          background: '#ffffff',
-          padding: '0 40px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',
+          background: 'rgba(255, 255, 255, 0.96)',
+          backdropFilter: 'blur(10px)',
+          borderBottom: '1px solid var(--th-border)',
+          padding: 0,
           height: 72,
+          lineHeight: 'normal',
           position: 'sticky',
           top: 0,
           zIndex: 1000,
-        }}
-      >
-        {/* LOGO THƯƠNG HIỆU */}
-        <div
-          style={{
-            fontSize: 22,
-            fontWeight: 800,
-            color: '#1677ff',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            letterSpacing: '0.5px',
-          }}
-          onClick={() => navigate('/')}
-        >
-          <CompassOutlined style={{ fontSize: 28, marginRight: 10, color: '#1677ff' }} />
-          TRAVELHUB
-        </div>
-
-        {/* THANH TÌM KIẾM TOUR TOÀN CỤC */}
-        <div style={{ width: '38%', maxWidth: 520 }}>
-          <Search
-            placeholder="Tìm điểm đến mơ ước (Phú Quốc, Đà Lạt, Sa Pa...)"
-            allowClear
-            enterButton="Tìm Kiếm"
-            size="large"
-            style={{ borderRadius: 8 }}
-            onSearch={(val) => navigate(val.trim() ? `/?keyword=${encodeURIComponent(val.trim())}` : '/')}
-          />
-        </div>
-
-        {/* KHU VỰC ĐIỀU HƯỚNG TÀI KHOẢN & THÔNG BÁO */}
-        <Space size="middle" align="center">
-          {isAuthenticated && <NotificationDropdown />}
-
-          {isAuthenticated ? (
-            <UserMenuDropdown onOpenProfile={() => setProfileModalOpen(true)} />
-          ) : (
-            <Space size="small">
-              <Button icon={<UserOutlined />} size="middle" onClick={openLogin}>
-                Đăng nhập
-              </Button>
-              <Button type="primary" size="middle" onClick={openRegister}>
-                Đăng ký
-              </Button>
-            </Space>
-          )}
-        </Space>
-      </Header>
-
-      {/* 2. THANH ĐIỀU HƯỚNG DANH MỤC & DỊCH VỤ NHANH */}
-      <div
-        style={{
-          background: '#003a8c',
-          padding: '0 40px',
           display: 'flex',
           alignItems: 'center',
-          height: 46,
-          boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)',
         }}
       >
-        <Space size="large">
-          <Button
-            type="link"
-            style={{ color: '#ffffff', fontWeight: 600, padding: 0 }}
-            onClick={() => navigate('/')}
-          >
-            Trang chủ
-          </Button>
-
-          <Dropdown menu={{ items: categoryMenuItems }} trigger={['click']} placement="bottomLeft">
-            <Button
-              type="primary"
+        <div
+          className="th-container"
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: 20,
+          }}
+        >
+          {/* NHÓM TRÁI: LOGO + ĐIỀU HƯỚNG CHÍNH */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 28, minWidth: 0 }}>
+            <div
+              onClick={() => navigate('/')}
               style={{
-                background: '#0958d9',
-                borderColor: '#0958d9',
-                fontWeight: 600,
-                fontSize: 13,
-                borderRadius: 4,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                cursor: 'pointer',
+                flexShrink: 0,
               }}
             >
-              Danh Mục Tour <DownOutlined style={{ fontSize: 10, marginLeft: 6 }} />
-            </Button>
-          </Dropdown>
+              <div
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 10,
+                  background: 'linear-gradient(135deg, #0d6e6e 0%, #0b2545 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#ffffff',
+                  boxShadow: '0 4px 10px rgba(13, 110, 110, 0.25)',
+                }}
+              >
+                <CompassOutlined style={{ fontSize: 20 }} />
+              </div>
+              <div style={{ lineHeight: 1.1 }}>
+                <div style={{ fontSize: 18, fontWeight: 800, color: '#0b2545', letterSpacing: '-0.02em' }}>
+                  Travel<span style={{ color: '#0d6e6e' }}>Hub</span>
+                </div>
+                <div style={{ fontSize: 11, color: '#64748b', fontWeight: 500 }}>
+                  Khám phá Việt Nam & Thế giới
+                </div>
+              </div>
+            </div>
 
-          <Button
-            type="link"
-            style={{ color: 'rgba(255,255,255,0.9)', padding: 0, fontWeight: 500 }}
-            onClick={() => navigate('/my-bookings')}
-          >
-            Vé của tôi
-          </Button>
+            {/* THANH MENU ĐIỀU HƯỚNG */}
+            <nav style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className={`th-nav-link ${isHome ? 'active' : ''}`}
+                onClick={() => navigate('/')}
+              >
+                Khám phá tour
+              </button>
 
-          <Button
-            type="link"
-            style={{ color: 'rgba(255,255,255,0.9)', padding: 0, fontWeight: 500 }}
-            onClick={() => navigate('/custom-tour')}
-          >
-            Tour Khách Đoàn (B2B)
-          </Button>
-        </Space>
-      </div>
+              <Dropdown menu={{ items: categoryMenuItems }} trigger={['click']} placement="bottomLeft">
+                <button type="button" className="th-nav-link">
+                  Danh mục <DownOutlined style={{ fontSize: 10 }} />
+                </button>
+              </Dropdown>
 
-      {/* 3. NỘI DUNG CHÍNH CỦA TRANG */}
-      <Content style={{ padding: '24px 40px', minHeight: 'calc(100vh - 72px - 46px - 260px)' }}>
-        <Outlet />
+              <button
+                type="button"
+                className={`th-nav-link ${isMyBookings ? 'active' : ''}`}
+                onClick={() => navigate('/my-bookings')}
+              >
+                <ShoppingOutlined /> Vé của tôi
+              </button>
+
+              <button
+                type="button"
+                className={`th-nav-link ${isCustomTour ? 'active' : ''}`}
+                onClick={() => navigate('/custom-tour')}
+              >
+                <TeamOutlined /> Tour khách đoàn
+              </button>
+            </nav>
+          </div>
+
+          {/* NHÓM PHẢI: THÔNG BÁO & TÀI KHOẢN */}
+          <Space size={12} align="center" style={{ flexShrink: 0 }}>
+            {isAuthenticated && <NotificationDropdown />}
+
+            {isAuthenticated ? (
+              <UserMenuDropdown onOpenProfile={() => setProfileModalOpen(true)} />
+            ) : (
+              <Space size={8}>
+                <Button
+                  type="text"
+                  icon={<UserOutlined />}
+                  onClick={openLogin}
+                  style={{ color: '#0f172a', fontWeight: 600 }}
+                >
+                  Đăng nhập
+                </Button>
+                <Button
+                  type="primary"
+                  onClick={openRegister}
+                  style={{ borderRadius: 999, padding: '0 20px' }}
+                >
+                  Đăng ký
+                </Button>
+              </Space>
+            )}
+          </Space>
+        </div>
+      </Header>
+
+      {/* 2. NỘI DUNG CHÍNH — CĂN THẲNG TRÊN CÙNG LƯỚI 1240PX */}
+      <Content style={{ padding: '28px 0 56px', flex: 1 }}>
+        <div className="th-container">
+          <Outlet />
+        </div>
       </Content>
 
-      {/* 4. FOOTER HIỆN ĐẠI */}
-      <Footer style={{ background: '#001529', color: 'rgba(255, 255, 255, 0.65)', padding: '40px 40px 20px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 40, color: '#fff', marginBottom: 24 }}>
-          <div>
-            <h3 style={{ color: '#fff', marginBottom: 14, fontSize: 18, fontWeight: 700 }}>
-              <CompassOutlined /> TRAVELHUB TOUR SYSTEM
-            </h3>
-            <p style={{ color: '#aaa', margin: '4px 0' }}>Hệ thống quản lý và đặt tour du lịch trực tuyến hiện đại hàng đầu.</p>
-            <p style={{ color: '#aaa', margin: '4px 0' }}><EnvironmentOutlined /> Địa chỉ: 123 Đường Du Lịch, Quận 1, TP. Hồ Chí Minh</p>
-            <p style={{ color: '#aaa', margin: '4px 0' }}><PhoneOutlined /> Hotline: 1900 8888 (Hỗ trợ 24/7)</p>
-            <p style={{ color: '#aaa', margin: '4px 0' }}><MailOutlined /> Email: contact@travelhub.vn</p>
+      {/* 3. FOOTER CĂN LƯỚI ĐỒNG NHẤT */}
+      <Footer style={{ background: '#0b2545', color: '#cbd5e1', padding: '48px 0 24px' }}>
+        <div className="th-container">
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+              gap: 36,
+              marginBottom: 36,
+            }}
+          >
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                <div
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: 8,
+                    background: '#0d6e6e',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#fff',
+                  }}
+                >
+                  <CompassOutlined style={{ fontSize: 18 }} />
+                </div>
+                <span style={{ fontSize: 18, fontWeight: 800, color: '#ffffff' }}>TravelHub</span>
+              </div>
+              <p style={{ color: '#94a3b8', fontSize: 14, lineHeight: 1.7, marginBottom: 14 }}>
+                Nền tảng đặt tour du lịch trọn gói minh bạch giá, xác nhận nhanh chóng và hỗ trợ đồng hành 24/7.
+              </p>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#5eead4', fontSize: 13, fontWeight: 600 }}>
+                <SafetyCertificateOutlined /> Thanh toán an toàn qua VNPay
+              </div>
+            </div>
+
+            <div>
+              <h4 style={{ color: '#ffffff', fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 16 }}>
+                Khám phá
+              </h4>
+              <span className="th-footer-link" onClick={() => navigate('/')}>Tất cả tour du lịch</span>
+              <span className="th-footer-link" onClick={() => navigate('/?tourType=DOMESTIC')}>Tour trong nước</span>
+              <span className="th-footer-link" onClick={() => navigate('/?tourType=INTERNATIONAL')}>Tour quốc tế</span>
+              <span className="th-footer-link" onClick={() => navigate('/custom-tour')}>Thiết kế tour khách đoàn</span>
+            </div>
+
+            <div>
+              <h4 style={{ color: '#ffffff', fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 16 }}>
+                Hỗ trợ khách hàng
+              </h4>
+              <span className="th-footer-link" onClick={() => navigate('/my-bookings')}>Tra cứu & quản lý vé</span>
+              <span className="th-footer-link">Chính sách hoàn hủy linh hoạt</span>
+              <span className="th-footer-link">Điều khoản sử dụng</span>
+              <span className="th-footer-link">Chính sách bảo mật</span>
+            </div>
+
+            <div>
+              <h4 style={{ color: '#ffffff', fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 16 }}>
+                Liên hệ 24/7
+              </h4>
+              <p style={{ color: '#94a3b8', fontSize: 14, marginBottom: 10 }}>
+                <EnvironmentOutlined style={{ marginRight: 8, color: '#5eead4' }} />
+                123 Đường Du Lịch, Quận 1, TP. HCM
+              </p>
+              <p style={{ color: '#94a3b8', fontSize: 14, marginBottom: 10 }}>
+                <PhoneOutlined style={{ marginRight: 8, color: '#5eead4' }} />
+                Hotline: <strong style={{ color: '#fff' }}>1900 8888</strong>
+              </p>
+              <p style={{ color: '#94a3b8', fontSize: 14, marginBottom: 10 }}>
+                <MailOutlined style={{ marginRight: 8, color: '#5eead4' }} />
+                contact@travelhub.vn
+              </p>
+              <p style={{ color: '#94a3b8', fontSize: 14, marginBottom: 0 }}>
+                <GlobalOutlined style={{ marginRight: 8, color: '#5eead4' }} />
+                www.travelhub.vn
+              </p>
+            </div>
           </div>
 
-          <div>
-            <h4 style={{ color: '#fff', marginBottom: 14, fontSize: 15 }}>DỊCH VỤ & CHÍNH SÁCH</h4>
-            <p style={{ color: '#aaa', margin: '6px 0', cursor: 'pointer' }}>Chính sách bảo mật</p>
-            <p style={{ color: '#aaa', margin: '6px 0', cursor: 'pointer' }}>Điều khoản sử dụng</p>
-            <p style={{ color: '#aaa', margin: '6px 0', cursor: 'pointer' }}>Chính sách hoàn hủy tour</p>
-            <p style={{ color: '#aaa', margin: '6px 0', cursor: 'pointer' }}>Bảo hiểm du lịch</p>
+          <div
+            style={{
+              borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+              paddingTop: 20,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: 12,
+              fontSize: 13,
+              color: '#64748b',
+            }}
+          >
+            <span>© 2026 TravelHub Tour System. All rights reserved.</span>
+            <span>Đồ Án Chuyên Đề J2EE — Spring Boot & React</span>
           </div>
-
-          <div>
-            <h4 style={{ color: '#fff', marginBottom: 14, fontSize: 15 }}>KẾT NỐI VỚI CHÚNG TÔI</h4>
-            <p style={{ color: '#aaa', margin: '6px 0' }}><GlobalOutlined /> Website: www.travelhub.vn</p>
-            <p style={{ color: '#aaa', margin: '6px 0' }}>Facebook: TravelHub Official</p>
-            <p style={{ color: '#aaa', margin: '6px 0' }}>Zalo OA: TravelHub Du Lịch</p>
-          </div>
-        </div>
-
-        <div style={{ textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 18, color: '#777', fontSize: 13 }}>
-          © 2026 TravelHub System — Đồ Án Chuyên Đề J2EE (Spring Boot & React).
         </div>
       </Footer>
 
-      {/* MODAL ĐĂNG NHẬP / ĐĂNG KÝ (ĐÃ ĐƯỢC TÁCH COMPONENT RIÊNG GỌN GÀNG) */}
+      {/* MODAL ĐĂNG NHẬP / ĐĂNG KÝ */}
       <AuthModal
         open={authModalOpen}
         initialMode={authModalMode}
@@ -228,7 +335,7 @@ const ClientLayout = () => {
         onCancel={() => setProfileModalOpen(false)}
       />
 
-      {/* AI ASSISTANT WIDGET */}
+      {/* TRỢ LÝ ẢO AI */}
       <AiChatWidget />
     </Layout>
   );

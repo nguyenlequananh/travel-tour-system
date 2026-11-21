@@ -380,10 +380,10 @@ const TourDepartureManagement = () => {
   ];
 
   return (
-    <Card style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+    <Card>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 18 }}>
         <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <CalendarOutlined style={{ color: '#1677ff' }} /> Quản lý Lịch Khởi Hành
+          <CalendarOutlined style={{ color: '#0d6e6e' }} /> Quản lý Lịch Khởi Hành
         </h2>
         <Button type="primary" icon={<PlusOutlined />} onClick={() => handleOpenModal(null)} disabled={!selectedTour}>
           Mở Bán Đợt Mới
@@ -391,32 +391,36 @@ const TourDepartureManagement = () => {
       </div>
 
       {/* THANH HIỂN THỊ TOUR ĐANG CHỌN */}
-      <div style={{
-        marginBottom: 16,
-        background: '#e6f4ff',
-        border: '1px solid #91caff',
-        padding: '12px 16px',
-        borderRadius: 8,
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
+      <div
+        style={{
+          marginBottom: 18,
+          background: '#e6f4f1',
+          border: '1px solid #99d5cc',
+          padding: '14px 18px',
+          borderRadius: 12,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 12,
+        }}
+      >
         <div>
-          <span style={{ color: '#555', marginRight: 8 }}>Tour đang quản lý lịch:</span>
+          <span style={{ color: '#475569', marginRight: 8, fontSize: 13.5 }}>Tour đang quản lý lịch:</span>
           {selectedTour ? (
-            <strong style={{ fontSize: 16, color: '#0958d9' }}>
+            <strong style={{ fontSize: 15.5, color: '#0b2545' }}>
               [{selectedTour.tourCode}] {selectedTour.name} ({selectedTour.departureCity} ➔ {selectedTour.destinationCity})
             </strong>
           ) : (
-            <span style={{ color: '#ff4d4f' }}>Chưa chọn tour nào</span>
+            <span style={{ color: '#dc2626', fontWeight: 600 }}>Chưa chọn tour nào</span>
           )}
         </div>
-        <Button type="primary" onClick={handleOpenSelectTourModal}>
-          🔍 Chọn / Đổi Tour Khác
+        <Button type="primary" icon={<SearchOutlined />} onClick={handleOpenSelectTourModal}>
+          Chọn / Đổi Tour Khác
         </Button>
       </div>
 
-      <Table columns={columns} dataSource={departures} rowKey="id" loading={loading} />
+      <Table columns={columns} dataSource={departures} rowKey="id" loading={loading} scroll={{ x: 960 }} />
 
       {/* ================= 1. MODAL CHỌN TOUR ================= */}
       <Modal

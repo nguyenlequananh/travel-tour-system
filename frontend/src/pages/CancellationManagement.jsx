@@ -128,21 +128,24 @@ const CancellationManagement = () => {
 
   return (
     <div>
-      <Card style={{ marginBottom: 16 }}>
-        <h2 style={{ margin: 0 }}>
-          <RollbackOutlined style={{ marginRight: 8, color: '#ff4d4f' }} />
+      <Card style={{ marginBottom: 18 }}>
+        <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <RollbackOutlined style={{ color: '#e85d04' }} />
           Xử lý Hủy Tour & Hoàn Tiền
         </h2>
       </Card>
 
-      <Table
-        columns={columns}
-        dataSource={cancellations}
-        rowKey="id"
-        loading={loading}
-        pagination={pagination}
-        onChange={handleTableChange}
-      />
+      <Card styles={{ body: { padding: 16 } }}>
+        <Table
+          columns={columns}
+          dataSource={cancellations}
+          rowKey="id"
+          loading={loading}
+          scroll={{ x: 960 }}
+          pagination={pagination}
+          onChange={handleTableChange}
+        />
+      </Card>
     </div>
   );
 };

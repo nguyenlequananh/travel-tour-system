@@ -288,11 +288,11 @@ const BookingManagement = () => {
 
   return (
     <div>
-      <Card style={{ marginBottom: 16 }}>
+      <Card style={{ marginBottom: 18 }}>
         <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
           <Col>
-            <h2 style={{ margin: 0 }}>
-              <ShoppingOutlined style={{ marginRight: 8, color: '#1677ff' }} />
+            <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <ShoppingOutlined style={{ color: '#0d6e6e' }} />
               Quản lý Đơn Đặt Tour
             </h2>
           </Col>
@@ -302,7 +302,7 @@ const BookingManagement = () => {
           <Col xs={24} sm={12} md={7}>
             <Input
               placeholder="Tìm theo Mã đơn, Tên khách, Email..."
-              prefix={<SearchOutlined />}
+              prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               onPressEnter={handleSearch}
@@ -350,19 +350,22 @@ const BookingManagement = () => {
         </Row>
       </Card>
 
-      <Table
-        columns={columns}
-        dataSource={bookings}
-        rowKey="id"
-        loading={loading}
-        pagination={{
-          ...pagination,
-          position: ['bottomCenter'],
-          showTotal: (total) => `Tổng cộng ${total} đơn hàng`,
-          showSizeChanger: true,
-        }}
-        onChange={handleTableChange}
-      />
+      <Card styles={{ body: { padding: 16 } }}>
+        <Table
+          columns={columns}
+          dataSource={bookings}
+          rowKey="id"
+          loading={loading}
+          scroll={{ x: 1050 }}
+          pagination={{
+            ...pagination,
+            position: ['bottomCenter'],
+            showTotal: (total) => `Tổng cộng ${total} đơn hàng`,
+            showSizeChanger: true,
+          }}
+          onChange={handleTableChange}
+        />
+      </Card>
 
       <BookingDetailModal
         open={isDetailModalOpen}

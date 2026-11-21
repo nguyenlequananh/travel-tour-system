@@ -183,10 +183,10 @@ const TourItineraryManagement = () => {
   ];
 
   return (
-    <Card style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+    <Card>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 18 }}>
         <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <ScheduleOutlined style={{ color: '#1677ff' }} /> Quản lý Lịch Trình Chi Tiết
+          <ScheduleOutlined style={{ color: '#0d6e6e' }} /> Quản lý Lịch Trình Chi Tiết
         </h2>
         <Button type="primary" icon={<PlusOutlined />} onClick={() => handleOpenModal(null)} disabled={!selectedTour}>
           Thêm Ngày Lịch Trình
@@ -194,28 +194,32 @@ const TourItineraryManagement = () => {
       </div>
 
       {/* THANH HIỂN THỊ TOUR ĐANG CHỌN & NÚT [ĐỔI TOUR] */}
-      <div style={{
-        marginBottom: 16,
-        background: '#e6f4ff',
-        border: '1px solid #91caff',
-        padding: '12px 16px',
-        borderRadius: 8,
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
+      <div
+        style={{
+          marginBottom: 18,
+          background: '#e6f4f1',
+          border: '1px solid #99d5cc',
+          padding: '14px 18px',
+          borderRadius: 12,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 12,
+        }}
+      >
         <div>
-          <span style={{ color: '#555', marginRight: 8 }}>Tour đang thiết kế lịch trình:</span>
+          <span style={{ color: '#475569', marginRight: 8, fontSize: 13.5 }}>Tour đang thiết kế lịch trình:</span>
           {selectedTour ? (
-            <strong style={{ fontSize: 16, color: '#0958d9' }}>
+            <strong style={{ fontSize: 15.5, color: '#0b2545' }}>
               [{selectedTour.tourCode}] {selectedTour.name} ({selectedTour.durationDays} Ngày {selectedTour.durationNights} Đêm)
             </strong>
           ) : (
-            <span style={{ color: '#ff4d4f' }}>Chưa chọn tour nào</span>
+            <span style={{ color: '#dc2626', fontWeight: 600 }}>Chưa chọn tour nào</span>
           )}
         </div>
-        <Button type="primary" onClick={handleOpenSelectTourModal}>
-          🔍 Chọn / Đổi Tour Khác
+        <Button type="primary" icon={<SearchOutlined />} onClick={handleOpenSelectTourModal}>
+          Chọn / Đổi Tour Khác
         </Button>
       </div>
 
@@ -225,6 +229,7 @@ const TourItineraryManagement = () => {
         rowKey="id"
         loading={loading}
         pagination={false}
+        scroll={{ x: 860 }}
       />
 
       {/* ================= MODAL CHỌN TOUR ================= */}

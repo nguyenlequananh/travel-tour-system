@@ -1,21 +1,27 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Tabs, Form, Input, Button, message, Spin, Typography } from 'antd';
-import { UserOutlined, PhoneOutlined, HomeOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
+import { Tabs, Form, Input, Button, message, Spin, Avatar } from 'antd';
+import {
+  UserOutlined,
+  PhoneOutlined,
+  HomeOutlined,
+  LockOutlined,
+  MailOutlined,
+  SafetyCertificateOutlined,
+} from '@ant-design/icons';
 import userService from '../../services/userService';
-
-const { Title } = Typography;
 
 const ProfilePage = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [profileData, setProfileData] = useState(null);
   const [profileForm] = Form.useForm();
   const [passwordForm] = Form.useForm();
 
-  // 1. Tải thông tin cá nhân từ Token
   const fetchProfile = async () => {
     setLoading(true);
     try {
       const res = await userService.getProfile();
+      setProfileData(res.data);
       profileForm.setFieldsValue(res.data);
     } catch (err) {
       message.error(err.message || 'Lỗi khi tải thông tin cá nhân!');
@@ -28,7 +34,6 @@ const ProfilePage = () => {
     fetchProfile();
   }, []);
 
-  // 2. Cập nhật thông tin cá nhân
   const handleUpdateProfile = async (values) => {
     setSaving(true);
     try {
@@ -38,7 +43,7 @@ const ProfilePage = () => {
         address: values.address,
       });
 
-      // Cập nhật lại thông tin trong localStorage để thanh Header đổi tên ngay lập tức
+      setProfileData(res.data);
       const savedUser = JSON.parse(localStorage.getItem('travel_user') || '{}');
       savedUser.fullName = res.data.fullName;
       localStorage.setItem('travel_user', JSON.stringify(savedUser));
@@ -51,7 +56,6 @@ const ProfilePage = () => {
     }
   };
 
-  // 3. Đổi mật khẩu
   const handleChangePassword = async (values) => {
     try {
       await userService.changePassword(values);
@@ -73,22 +77,27 @@ const ProfilePage = () => {
   const tabItems = [
     {
       key: '1',
-      label: 'Thông tin cá nhân',
+      label: (
+        <span>
+          <UserOutlined style={{ marginRight: 6 }} />
+          Thông tin cá nhân
+        </span>
+      ),
       children: (
-        <Form form={profileForm} layout="vertical" onFinish={handleUpdateProfile} style={{ maxWidth: 500 }}>
+        <Form form={profileForm} layout="vertical" onFinish={handleUpdateProfile} style={{ maxWidth: 520, marginTop: 8 }}>
           <Form.Item name="email" label="Email đăng nhập">
-            <Input prefix={<MailOutlined />} disabled style={{ color: '#888', background: '#f5f5f5' }} />
+            <Input prefix={<MailOutlined style={{ color: '#94a3b8' }} />} disabled />
           </Form.Item>
           <Form.Item name="fullName" label="Họ và tên" rules={[{ required: true, message: 'Nhập họ tên!' }]}>
-            <Input prefix={<UserOutlined />} placeholder="Nguyễn Văn A" />
+            <Input prefix={<UserOutlined style={{ color: '#94a3b8' }} />} placeholder="Nguyễn Văn A" />
           </Form.Item>
           <Form.Item name="phoneNumber" label="Số điện thoại">
-            <Input prefix={<PhoneOutlined />} placeholder="0912345678" />
+            <Input prefix={<PhoneOutlined style={{ color: '#94a3b8' }} />} placeholder="0912345678" />
           </Form.Item>
           <Form.Item name="address" label="Địa chỉ">
-            <Input prefix={<HomeOutlined />} placeholder="Địa chỉ của bạn..." />
+            <Input prefix={<HomeOutlined style={{ color: '#94a3b8' }} />} placeholder="Địa chỉ liên hệ của bạn..." />
           </Form.Item>
-          <Button type="primary" htmlType="submit" loading={saving}>
+          <Button type="primary" htmlType="submit" loading={saving} style={{ minWidth: 150 }}>
             Lưu thay đổi
           </Button>
         </Form>
@@ -96,22 +105,27 @@ const ProfilePage = () => {
     },
     {
       key: '2',
-      label: 'Đổi mật khẩu',
+      label: (
+        <span>
+          <SafetyCertificateOutlined style={{ marginRight: 6 }} />
+          Đổi mật khẩu
+        </span>
+      ),
       children: (
-        <Form form={passwordForm} layout="vertical" onFinish={handleChangePassword} style={{ maxWidth: 500 }}>
+        <Form form={passwordForm} layout="vertical" onFinish={handleChangePassword} style={{ maxWidth: 520, marginTop: 8 }}>
           <Form.Item
             name="currentPassword"
             label="Mật khẩu hiện tại"
             rules={[{ required: true, message: 'Vui lòng nhập mật khẩu cũ!' }]}
           >
-            <Input.Password prefix={<LockOutlined />} placeholder="Nhập mật khẩu hiện tại" />
+            <Input.Password prefix={<LockOutlined style={{ color: '#94a3b8' }} />} placeholder="Nhập mật khẩu hiện tại" />
           </Form.Item>
           <Form.Item
             name="newPassword"
             label="Mật khẩu mới"
             rules={[{ required: true, min: 6, message: 'Mật khẩu mới ít nhất 6 ký tự!' }]}
           >
-            <Input.Password prefix={<LockOutlined />} placeholder="Tối thiểu 6 ký tự" />
+            <Input.Password prefix={<LockOutlined style={{ color: '#94a3b8' }} />} placeholder="Tối thiểu 6 ký tự" />
           </Form.Item>
           <Form.Item
             name="confirmPassword"
@@ -129,9 +143,9 @@ const ProfilePage = () => {
               }),
             ]}
           >
-            <Input.Password prefix={<LockOutlined />} placeholder="Nhập lại mật khẩu mới" />
+            <Input.Password prefix={<LockOutlined style={{ color: '#94a3b8' }} />} placeholder="Nhập lại mật khẩu mới" />
           </Form.Item>
-          <Button type="primary" danger htmlType="submit">
+          <Button type="primary" danger htmlType="submit" style={{ minWidth: 160 }}>
             Cập nhật mật khẩu
           </Button>
         </Form>
@@ -140,13 +154,34 @@ const ProfilePage = () => {
   ];
 
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto' }}>
-      <Card style={{ borderRadius: 12, boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }}>
-        <Title level={3} style={{ marginBottom: 20 }}>
-          <UserOutlined style={{ marginRight: 8, color: '#1677ff' }} /> Tài Khoản Của Tôi
-        </Title>
+    <div style={{ maxWidth: 820, margin: '0 auto' }}>
+      {/* HEADER HỒ SƠ */}
+      <div
+        className="th-section-card"
+        style={{
+          padding: 24,
+          marginBottom: 20,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 18,
+          background: 'linear-gradient(120deg, #ffffff 60%, #e6f4f1 100%)',
+        }}
+      >
+        <Avatar size={64} icon={<UserOutlined />} style={{ backgroundColor: '#0d6e6e', flexShrink: 0 }} />
+        <div>
+          <h1 style={{ fontSize: 22, fontWeight: 800, margin: '0 0 4px', color: '#0f172a' }}>
+            {profileData?.fullName || 'Tài Khoản Của Tôi'}
+          </h1>
+          <p style={{ color: '#64748b', margin: 0, fontSize: 14 }}>
+            {profileData?.email || 'Cập nhật thông tin liên hệ và bảo mật tài khoản TravelHub'}
+          </p>
+        </div>
+      </div>
+
+      {/* NỘI DUNG TABS */}
+      <div className="th-section-card" style={{ padding: '16px 28px 28px' }}>
         <Tabs defaultActiveKey="1" items={tabItems} />
-      </Card>
+      </div>
     </div>
   );
 };

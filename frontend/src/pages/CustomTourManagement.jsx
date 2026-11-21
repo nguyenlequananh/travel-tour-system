@@ -189,11 +189,11 @@ const CustomTourManagement = () => {
 
   return (
     <div>
-      <Card style={{ marginBottom: 16 }}>
+      <Card style={{ marginBottom: 18 }}>
         <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
           <Col>
-            <h2 style={{ margin: 0 }}>
-              <TeamOutlined style={{ marginRight: 8, color: '#1677ff' }} />
+            <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <TeamOutlined style={{ color: '#0d6e6e' }} />
               Quản lý Yêu Cầu Thiết Kế Tour Đoàn
             </h2>
           </Col>
@@ -203,7 +203,7 @@ const CustomTourManagement = () => {
           <Col xs={24} sm={12} md={10}>
             <Input
               placeholder="Tìm theo tên khách, sđt, email hoặc điểm đến..."
-              prefix={<SearchOutlined />}
+              prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               onPressEnter={handleSearch}
@@ -237,14 +237,17 @@ const CustomTourManagement = () => {
         </Row>
       </Card>
 
-      <Table
-        columns={columns}
-        dataSource={requests}
-        rowKey="id"
-        loading={loading}
-        pagination={pagination}
-        onChange={handleTableChange}
-      />
+      <Card styles={{ body: { padding: 16 } }}>
+        <Table
+          columns={columns}
+          dataSource={requests}
+          rowKey="id"
+          loading={loading}
+          scroll={{ x: 1020 }}
+          pagination={pagination}
+          onChange={handleTableChange}
+        />
+      </Card>
 
       {/* MODAL CHI TIẾT YÊU CẦU TOUR ĐOÀN */}
       <Modal

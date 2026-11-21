@@ -199,10 +199,10 @@ const PromotionManagement = () => {
   ];
 
   return (
-    <Card style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+    <Card>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 18 }}>
         <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <GiftOutlined style={{ color: '#722ed1' }} /> Quản lý Mã Giảm Giá / Khuyến Mãi
+          <GiftOutlined style={{ color: '#0d6e6e' }} /> Quản lý Mã Giảm Giá / Khuyến Mãi
         </h2>
         <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenCreateModal}>
           Tạo Mã Mới
@@ -214,6 +214,7 @@ const PromotionManagement = () => {
         dataSource={promotions}
         rowKey="id"
         loading={loading}
+        scroll={{ x: 960 }}
         pagination={pagination}
         onChange={handleTableChange}
       />

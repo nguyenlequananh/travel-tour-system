@@ -1,111 +1,326 @@
+/* =========================================================================
+   TRAVELHUB DESIGN SYSTEM — C.R.A.P. PRINCIPLES
+   Contrast · Repetition · Alignment · Proximity
+   ========================================================================= */
+
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  /* 60% Neutral Canvas & Surfaces */
+  --th-bg: #f6f8fb;
+  --th-surface: #ffffff;
+  --th-surface-subtle: #f1f5f9;
+  --th-border: #e2e8f0;
+  --th-border-strong: #cbd5e1;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  /* 30% Typography & Deep Anchors (High Contrast WCAG AA+) */
+  --th-ink: #0f172a;
+  --th-ink-secondary: #475569;
+  --th-ink-muted: #64748b;
+  --th-navy: #0b2545;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  /* 10% Brand Accent & Action Focal Points */
+  --th-primary: #0d6e6e;
+  --th-primary-hover: #095252;
+  --th-primary-soft: #e6f4f1;
+  --th-primary-border: #99d5cc;
+  --th-accent: #e85d04;
+  --th-accent-hover: #cc4e00;
+  --th-accent-soft: #fff4ed;
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  /* Repetition: Consistent Radii & Shadows */
+  --th-radius-sm: 8px;
+  --th-radius-md: 12px;
+  --th-radius-lg: 16px;
+  --th-radius-pill: 999px;
+  --th-shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --th-shadow-md: 0 8px 24px rgba(15, 23, 42, 0.07);
+  --th-shadow-lg: 0 16px 36px rgba(15, 23, 42, 0.12);
+
+  /* Typography */
+  --th-font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
-}
-
-body {
-  margin: 0;
-}
-
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
-}
-
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
+html,
+body {
   margin: 0;
-}
-
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
-
-code {
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
+  font-family: var(--th-font);
   font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+  line-height: 1.6;
+  color: var(--th-ink);
+  background-color: var(--th-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+  text-align: left;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--th-font);
+  color: var(--th-ink);
+  margin-top: 0;
+  letter-spacing: -0.02em;
+}
+
+p {
+  margin-top: 0;
+}
+
+/* Alignment: Unified container across Header, Content, and Footer */
+.th-container {
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* Navigation link hover & active states */
+.th-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--th-radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--th-ink-secondary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.th-nav-link:hover {
+  color: var(--th-primary);
+  background: var(--th-primary-soft);
+}
+
+.th-nav-link.active {
+  color: var(--th-primary);
+  background: var(--th-primary-soft);
+}
+
+/* Tour Card interactive polish */
+.th-tour-card {
+  background: var(--th-surface);
+  border: 1px solid var(--th-border);
+  border-radius: var(--th-radius-lg);
+  overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease;
+  box-shadow: var(--th-shadow-sm);
+}
+
+.th-tour-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--th-shadow-lg);
+  border-color: var(--th-primary-border);
+}
+
+.th-tour-card-img-wrap {
+  position: relative;
+  height: 205px;
+  overflow: hidden;
+  background: var(--th-surface-subtle);
+}
+
+.th-tour-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.45s ease;
+}
+
+.th-tour-card:hover .th-tour-card-img {
+  transform: scale(1.06);
+}
+
+/* Category quick-filter pills */
+.th-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border-radius: var(--th-radius-pill);
+  border: 1px solid var(--th-border);
+  background: var(--th-surface);
+  color: var(--th-ink-secondary);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.th-pill-btn:hover {
+  border-color: var(--th-primary);
+  color: var(--th-primary);
+  background: var(--th-primary-soft);
+}
+
+.th-pill-btn.active {
+  background: var(--th-primary);
+  border-color: var(--th-primary);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(13, 110, 110, 0.22);
+}
+
+/* Departure option card */
+.th-departure-card {
+  border: 1.5px solid var(--th-border);
+  background: var(--th-surface);
+  border-radius: var(--th-radius-md);
+  padding: 16px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.th-departure-card:hover:not(.disabled) {
+  border-color: var(--th-primary);
+  box-shadow: var(--th-shadow-sm);
+}
+
+.th-departure-card.selected {
+  border-color: var(--th-primary);
+  background: var(--th-primary-soft);
+  box-shadow: 0 0 0 3px rgba(13, 110, 110, 0.12);
+}
+
+.th-departure-card.disabled {
+  background: #f8fafc;
+  opacity: 0.62;
+  cursor: not-allowed;
+}
+
+/* Consistent Section Card */
+.th-section-card {
+  background: var(--th-surface);
+  border: 1px solid var(--th-border);
+  border-radius: var(--th-radius-lg);
+  box-shadow: var(--th-shadow-sm);
+}
+
+/* Footer link hover */
+.th-footer-link {
+  color: #94a3b8;
+  font-size: 14px;
+  margin: 0 0 10px 0;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  display: block;
+}
+
+.th-footer-link:hover {
+  color: #ffffff;
+}
+
+/* =========================================================================
+   ADMIN & GUIDE PORTAL — UNIFIED C.R.A.P. POLISH
+   ========================================================================= */
+
+/* Deep Coastal Navy Sidebar matching Customer Brand */
+.th-admin-sider.ant-layout-sider {
+  background: #0b2545 !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.th-admin-sider .ant-menu-dark {
+  background: transparent !important;
+}
+
+.th-admin-sider .ant-menu-dark .ant-menu-item-group-title {
+  color: rgba(148, 163, 184, 0.78);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 16px 20px 6px;
+}
+
+.th-admin-sider .ant-menu-dark .ant-menu-item {
+  margin: 3px 10px;
+  width: calc(100% - 20px);
+  border-radius: 10px;
+  color: #cbd5e1;
+  font-weight: 500;
+  height: 40px;
+  line-height: 40px;
+}
+
+.th-admin-sider .ant-menu-dark .ant-menu-item:hover {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.th-admin-sider .ant-menu-dark .ant-menu-item-selected {
+  background: #0d6e6e !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(13, 110, 110, 0.32);
+}
+
+/* Unified Card & Table rhythm inside Admin & Guide Portals */
+.th-portal-content .ant-card {
+  border-radius: var(--th-radius-lg);
+  border: 1px solid var(--th-border);
+  box-shadow: var(--th-shadow-sm);
+}
+
+.th-portal-content .ant-card-head {
+  border-bottom: 1px solid #f1f5f9;
+  font-weight: 700;
+  color: var(--th-ink);
+}
+
+.th-portal-content .ant-table-wrapper .ant-table {
+  border-radius: var(--th-radius-md);
+  overflow: hidden;
+  border: 1px solid var(--th-border);
+}
+
+.th-portal-content .ant-table-thead > tr > th {
+  background: #f8fafc !important;
+  color: #475569 !important;
+  font-weight: 700 !important;
+  font-size: 12.5px;
+  border-bottom: 1px solid var(--th-border) !important;
+}
+
+.th-portal-content .ant-table-tbody > tr:hover > td {
+  background: #f8fafc !important;
+}
+
+.th-portal-content h2 {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--th-ink);
+  letter-spacing: -0.02em;
+}
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+  .th-container {
+    padding: 0 16px;
+  }
 }

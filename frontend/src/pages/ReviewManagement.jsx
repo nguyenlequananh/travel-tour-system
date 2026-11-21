@@ -110,22 +110,27 @@ const ReviewManagement = () => {
 
   return (
     <div>
-      <Card style={{ marginBottom: 16 }}>
-        <h2 style={{ margin: 0 }}>
-          <StarOutlined style={{ color: '#faad14', marginRight: 8 }} />
+      <Card style={{ marginBottom: 18 }}>
+        <h2 style={{ margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <StarOutlined style={{ color: '#d97706' }} />
           Quản lý Đánh Giá & Nhận Xét
         </h2>
-        <span style={{ color: '#888' }}>Kiểm duyệt các phản hồi từ khách hàng sau khi đi tour</span>
+        <span style={{ color: '#64748b', fontSize: 13.5 }}>
+          Kiểm duyệt các phản hồi từ khách hàng sau khi đi tour
+        </span>
       </Card>
 
-      <Table
-        columns={columns}
-        dataSource={reviews}
-        rowKey="id"
-        loading={loading}
-        pagination={pagination}
-        onChange={handleTableChange}
-      />
+      <Card styles={{ body: { padding: 16 } }}>
+        <Table
+          columns={columns}
+          dataSource={reviews}
+          rowKey="id"
+          loading={loading}
+          scroll={{ x: 860 }}
+          pagination={pagination}
+          onChange={handleTableChange}
+        />
+      </Card>
     </div>
   );
 };

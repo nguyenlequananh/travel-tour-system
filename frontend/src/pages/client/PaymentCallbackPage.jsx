@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Result, Button, Spin, Card } from 'antd';
+import { Result, Button, Spin } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
 import paymentService from '../../services/paymentService';
 
@@ -15,24 +15,14 @@ const PaymentCallbackPage = () => {
   useEffect(() => {
     const verifyPayment = async () => {
       try {
-        // 1. Lấy toàn bộ tham số do VNPay gửi về trên thanh URL
         const searchParams = location.search;
-
-        // Trích xuất mã đơn và số tiền để hiển thị lên màn hình
         const params = new URLSearchParams(searchParams);
         setBookingCode(params.get('vnp_TxnRef') || '');
-        const rawAmount = Number(params.get('vnp_Amount') || 0) / 100; // Chia lại cho 100
+        const rawAmount = Number(params.get('vnp_Amount') || 0) / 100;
         setAmount(rawAmount);
 
-        // 2. Gọi paymentService để gửi callback sang backend
         const res = await paymentService.verifyVnPayCallback(searchParams);
-
-        // Backend trả về true nếu thanh toán thành công (mã 00)
-        if (res.data === true) {
-          setIsSuccess(true);
-        } else {
-          setIsSuccess(false);
-        }
+        setIsSuccess(res.data === true);
       } catch (err) {
         setIsSuccess(false);
       } finally {
@@ -45,26 +35,45 @@ const PaymentCallbackPage = () => {
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '100px 0' }}>
+      <div className="th-section-card" style={{ maxWidth: 560, margin: '60px auto', padding: '64px 24px', textAlign: 'center' }}>
         <Spin size="large" />
-        <h3 style={{ marginTop: 20 }}>Đang kiểm tra giao dịch với ngân hàng VNPay...</h3>
-        <p style={{ color: '#888' }}>Vui lòng không tắt hoặc tải lại trang web.</p>
+        <h3 style={{ marginTop: 20, marginBottom: 6, color: '#0f172a' }}>Đang xác thực giao dịch với VNPay...</h3>
+        <p style={{ color: '#64748b', margin: 0 }}>Vui lòng không đóng hoặc tải lại trình duyệt trong giây lát.</p>
       </div>
     );
   }
 
   return (
-    <div style={{ maxWidth: 700, margin: '40px auto', padding: '0 16px' }}>
-      <Card bordered={false} style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.08)', borderRadius: 12 }}>
+    <div style={{ maxWidth: 680, margin: '36px auto' }}>
+      <div className="th-section-card" style={{ padding: '24px 28px' }}>
         {isSuccess ? (
           <Result
             status="success"
             title="Thanh Toán Tour Du Lịch Thành Công!"
             subTitle={
-              <div>
-                <p>Mã đơn đặt tour của quý khách: <strong style={{ color: '#1677ff', fontSize: 16 }}>{bookingCode}</strong></p>
-                <p>Số tiền đã thanh toán: <strong style={{ color: '#52c41a', fontSize: 18 }}>{amount.toLocaleString('vi-VN')} đ</strong></p>
-                <p style={{ color: '#666' }}>Hệ thống đã gửi email hóa đơn chi tiết vào hộp thư của bạn. Chúc bạn có một chuyến du lịch tuyệt vời!</p>
+              <div
+                style={{
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: 12,
+                  padding: '16px 20px',
+                  marginTop: 14,
+                  textAlign: 'left',
+                  maxWidth: 440,
+                  marginInline: 'auto',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <span style={{ color: '#64748b' }}>Mã đơn đặt tour:</span>
+                  <strong style={{ color: '#0d6e6e', fontSize: 15 }}>{bookingCode}</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+                  <span style={{ color: '#64748b' }}>Số tiền đã thanh toán:</span>
+                  <strong style={{ color: '#e85d04', fontSize: 17 }}>{amount.toLocaleString('vi-VN')} đ</strong>
+                </div>
+                <div style={{ fontSize: 13, color: '#475569', borderTop: '1px dashed #cbd5e1', paddingTop: 10 }}>
+                  Hệ thống đã gửi email xác nhận & hóa đơn chi tiết vào hộp thư của bạn.
+                </div>
               </div>
             }
             extra={[
@@ -79,11 +88,17 @@ const PaymentCallbackPage = () => {
         ) : (
           <Result
             status="error"
-            title="Giao Dịch Thanh Toán Thất Bại!"
-            subTitle="Giao dịch của bạn đã bị hủy hoặc xảy ra lỗi trong quá trình trừ tiền từ ngân hàng. Đơn hàng của bạn vẫn được giữ chỗ, vui lòng thử thanh toán lại."
+            title="Giao Dịch Thanh Toán Chưa Hoàn Tất"
+            subTitle="Giao dịch đã bị hủy hoặc gặp lỗi từ phía ngân hàng. Đơn đặt tour của bạn vẫn đang được giữ chỗ trong thời hạn quy định, bạn có thể thử thanh toán lại."
             extra={[
-              <Button type="primary" danger size="large" key="retry" onClick={() => navigate('/my-bookings')}>
-                Quay Lại Thử Lại
+              <Button
+                type="primary"
+                danger
+                size="large"
+                key="retry"
+                onClick={() => navigate('/my-bookings')}
+              >
+                Quay Lại Thanh Toán
               </Button>,
               <Button size="large" key="home" onClick={() => navigate('/')}>
                 Về Trang Chủ
@@ -91,7 +106,7 @@ const PaymentCallbackPage = () => {
             ]}
           />
         )}
-      </Card>
+      </div>
     </div>
   );
 };

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Layout, Space } from 'antd';
-import { CompassOutlined } from '@ant-design/icons';
+import { Layout, Space, Button, Tag } from 'antd';
+import { CompassOutlined, GlobalOutlined } from '@ant-design/icons';
 import { Outlet, useNavigate } from 'react-router-dom';
 import ProfileModal from './ProfileModal';
 import NotificationDropdown from './NotificationDropdown';
@@ -13,54 +13,118 @@ const GuideLayout = () => {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   return (
-    <Layout style={{ minHeight: '100vh', background: '#f5f5f5' }}>
-      {/* HEADER CỔNG HƯỚNG DẪN VIÊN */}
+    <Layout style={{ minHeight: '100vh', background: 'var(--th-bg)' }}>
+      {/* HEADER ĐỒNG BỘ THƯƠNG HIỆU & CĂN LƯỚI 1240PX */}
       <Header
         style={{
-          background: '#ffffff',
-          padding: '0 32px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-          height: 68,
+          background: 'rgba(255, 255, 255, 0.96)',
+          backdropFilter: 'blur(10px)',
+          borderBottom: '1px solid var(--th-border)',
+          padding: 0,
+          height: 72,
+          lineHeight: 'normal',
           position: 'sticky',
           top: 0,
           zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
         }}
       >
         <div
+          className="th-container"
           style={{
-            fontSize: 18,
-            fontWeight: 800,
-            color: '#52c41a',
-            cursor: 'pointer',
             display: 'flex',
+            justifyContent: 'space-between',
             alignItems: 'center',
-            letterSpacing: '0.5px',
+            gap: 16,
           }}
-          onClick={() => navigate('/guide')}
         >
-          <CompassOutlined style={{ fontSize: 26, marginRight: 8, color: '#52c41a' }} />
-          TRAVELHUB GUIDE PORTAL
+          {/* LOGO + NHÃN GUIDE PORTAL */}
+          <div
+            onClick={() => navigate('/guide')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              cursor: 'pointer',
+            }}
+          >
+            <div
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 10,
+                background: 'linear-gradient(135deg, #0d6e6e 0%, #0b2545 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#ffffff',
+                boxShadow: '0 4px 10px rgba(13, 110, 110, 0.25)',
+              }}
+            >
+              <CompassOutlined style={{ fontSize: 20 }} />
+            </div>
+            <div style={{ lineHeight: 1.15 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 18, fontWeight: 800, color: '#0b2545' }}>
+                  Travel<span style={{ color: '#0d6e6e' }}>Hub</span>
+                </span>
+                <Tag
+                  style={{
+                    margin: 0,
+                    background: '#e6f4f1',
+                    color: '#0d6e6e',
+                    borderColor: '#99d5cc',
+                    fontWeight: 700,
+                    fontSize: 11,
+                    borderRadius: 999,
+                  }}
+                >
+                  GUIDE PORTAL
+                </Tag>
+              </div>
+              <div style={{ fontSize: 11.5, color: '#64748b', fontWeight: 500 }}>
+                Cổng tác nghiệp hướng dẫn viên
+              </div>
+            </div>
+          </div>
+
+          {/* TIỆN ÍCH PHẢI */}
+          <Space size={12} align="center">
+            <Button
+              type="text"
+              icon={<GlobalOutlined />}
+              onClick={() => navigate('/')}
+              style={{ color: '#475569', fontWeight: 600 }}
+            >
+              Trang khách hàng
+            </Button>
+
+            <NotificationDropdown isAdmin={false} />
+
+            <UserMenuDropdown onOpenProfile={() => setIsProfileModalOpen(true)} />
+          </Space>
         </div>
-
-        <Space size="large" align="center">
-          {/* THÔNG BÁO CHO HƯỚNG DẪN VIÊN */}
-          <NotificationDropdown isAdmin={false} />
-
-          {/* DROPDOWN USER */}
-          <UserMenuDropdown onOpenProfile={() => setIsProfileModalOpen(false)} />
-        </Space>
       </Header>
 
       {/* NỘI DUNG CHÍNH */}
-      <Content style={{ padding: '24px 32px', minHeight: 'calc(100vh - 68px - 60px)' }}>
-        <Outlet />
+      <Content className="th-portal-content" style={{ padding: '28px 0 48px', flex: 1 }}>
+        <div className="th-container">
+          <Outlet />
+        </div>
       </Content>
 
-      <Footer style={{ textAlign: 'center', color: '#8c8c8c', fontSize: 13, background: '#fff', borderTop: '1px solid #f0f0f0', padding: '16px 0' }}>
-        © 2026 TravelHub Guide Portal — Cổng Tác Nghiệp Hiện Trường Hướng Dẫn Viên
+      <Footer
+        style={{
+          textAlign: 'center',
+          color: '#64748b',
+          fontSize: 13,
+          background: '#ffffff',
+          borderTop: '1px solid var(--th-border)',
+          padding: '16px 0',
+        }}
+      >
+        © 2026 TravelHub Guide Portal — Hệ thống điều hành & điểm danh đoàn du lịch
       </Footer>
 
       <ProfileModal open={isProfileModalOpen} onCancel={() => setIsProfileModalOpen(false)} />

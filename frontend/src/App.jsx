@@ -1,5 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { ConfigProvider } from 'antd';
+import viVN from 'antd/locale/vi_VN';
 import { AuthProvider } from './context/AuthContext';
 
 // Chốt bảo vệ quyền hạn & Xử lý Google OAuth2
@@ -35,11 +37,45 @@ import UserManagement from './pages/UserManagement';
 import ReviewManagement from './pages/ReviewManagement';
 import CustomTourManagement from './pages/CustomTourManagement';
 
+const travelHubTheme = {
+  token: {
+    colorPrimary: '#0d6e6e',
+    colorInfo: '#0d6e6e',
+    colorSuccess: '#16a34a',
+    colorWarning: '#d97706',
+    colorError: '#dc2626',
+    colorTextBase: '#0f172a',
+    colorBgLayout: '#f6f8fb',
+    borderRadius: 10,
+    fontFamily: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    fontSize: 14,
+  },
+  components: {
+    Button: {
+      controlHeight: 40,
+      controlHeightLG: 46,
+      fontWeight: 600,
+    },
+    Card: {
+      borderRadiusLG: 16,
+    },
+    Input: {
+      controlHeight: 40,
+      controlHeightLG: 46,
+    },
+    Select: {
+      controlHeight: 40,
+      controlHeightLG: 46,
+    },
+  },
+};
+
 function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <Routes>
+    <ConfigProvider theme={travelHubTheme} locale={viVN}>
+      <BrowserRouter>
+        <AuthProvider>
+          <Routes>
           {/* ================= XỬ LÝ REDIRECT GOOGLE OAUTH2 ================= */}
           <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
 
@@ -77,9 +113,10 @@ function App() {
               <Route path="custom-tours" element={<CustomTourManagement />} />
             </Route>
           </Route>
-        </Routes>
-      </AuthProvider>
-    </BrowserRouter>
+          </Routes>
+        </AuthProvider>
+      </BrowserRouter>
+    </ConfigProvider>
   );
 }
 

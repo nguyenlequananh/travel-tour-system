@@ -88,11 +88,11 @@ const CategoryManagement = () => {
 
   return (
     <div>
-      <Card style={{ marginBottom: 16 }}>
-        <Row justify="space-between" align="middle">
+      <Card style={{ marginBottom: 18 }}>
+        <Row justify="space-between" align="middle" gutter={[12, 12]}>
           <Col>
-            <h2 style={{ margin: 0 }}>
-              <AppstoreOutlined style={{ marginRight: 8, color: '#1677ff' }} />
+            <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <AppstoreOutlined style={{ color: '#0d6e6e' }} />
               Quản lý Danh mục Tour
             </h2>
           </Col>
@@ -104,7 +104,9 @@ const CategoryManagement = () => {
         </Row>
       </Card>
 
-      <Table columns={columns} dataSource={categories} rowKey="id" loading={loading} />
+      <Card styles={{ body: { padding: 16 } }}>
+        <Table columns={columns} dataSource={categories} rowKey="id" loading={loading} scroll={{ x: 760 }} />
+      </Card>
 
       <Modal
         title={editingId ? 'Sửa Danh Mục' : 'Thêm Danh Mục Mới'}
