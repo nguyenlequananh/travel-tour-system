@@ -2,7 +2,7 @@ package com.travelhub.controller.common;
 
 import com.travelhub.dto.request.ChangePasswordRequest;
 import com.travelhub.dto.request.ProfileUpdateRequest;
-import com.travelhub.dto.response.ApiResponse;
+import com.travelhub.dto.common.ApiResponse;
 import com.travelhub.dto.response.UserResponse;
 import com.travelhub.service.UserService;
 import jakarta.validation.Valid;

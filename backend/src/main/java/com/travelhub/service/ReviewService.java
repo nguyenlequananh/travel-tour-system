@@ -1,8 +1,8 @@
 package com.travelhub.service;
 
-import com.travelhub.dto.request.ReviewFilterRequest;
+import com.travelhub.dto.filter.ReviewFilterRequest;
 import com.travelhub.dto.request.ReviewRequest;
-import com.travelhub.dto.response.PageResponse;
+import com.travelhub.dto.common.PageResponse;
 import com.travelhub.dto.response.ReviewResponse;
 
 import java.util.List;

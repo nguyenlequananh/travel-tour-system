@@ -1,7 +1,7 @@
 package com.travelhub.controller.client;
 
 import com.travelhub.dto.request.AiChatRequest;
-import com.travelhub.dto.response.ApiResponse;
+import com.travelhub.dto.common.ApiResponse;
 import com.travelhub.dto.response.AiChatResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

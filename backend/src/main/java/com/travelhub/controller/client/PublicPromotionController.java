@@ -1,6 +1,6 @@
 package com.travelhub.controller.client;
 
-import com.travelhub.dto.response.ApiResponse;
+import com.travelhub.dto.common.ApiResponse;
 import com.travelhub.dto.response.PromotionAdminResponse;
 import com.travelhub.service.PromotionService;
 import lombok.RequiredArgsConstructor;

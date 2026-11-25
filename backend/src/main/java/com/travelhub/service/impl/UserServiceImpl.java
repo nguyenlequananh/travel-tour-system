@@ -7,10 +7,10 @@ import java.util.Set;
 import com.travelhub.dto.request.ChangePasswordRequest;
 import com.travelhub.dto.request.ProfileUpdateRequest;
 import com.travelhub.dto.request.UserCreateRequest;
-import com.travelhub.dto.request.UserFilterRequest;
+import com.travelhub.dto.filter.UserFilterRequest;
 import com.travelhub.dto.request.UserRoleUpdateRequest;
 import com.travelhub.dto.request.UserUpdateRequest;
-import com.travelhub.dto.response.PageResponse;
+import com.travelhub.dto.common.PageResponse;
 import com.travelhub.dto.response.UserResponse;
 import com.travelhub.service.UserService;
 

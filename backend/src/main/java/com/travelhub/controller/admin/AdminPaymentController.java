@@ -1,9 +1,9 @@
 package com.travelhub.controller.admin;
 
 import com.travelhub.dto.request.PaymentCreateRequest;
-import com.travelhub.dto.request.PaymentFilterRequest;
-import com.travelhub.dto.response.ApiResponse;
-import com.travelhub.dto.response.PageResponse;
+import com.travelhub.dto.filter.PaymentFilterRequest;
+import com.travelhub.dto.common.ApiResponse;
+import com.travelhub.dto.common.PageResponse;
 import com.travelhub.dto.response.PaymentResponse;
 import com.travelhub.service.PaymentService;
 import jakarta.validation.Valid;

@@ -1,6 +1,6 @@
 package com.travelhub.controller.client;
 
-import com.travelhub.dto.response.ApiResponse;
+import com.travelhub.dto.common.ApiResponse;
 import com.travelhub.dto.response.TourCategoryResponse;
 import com.travelhub.enums.CategoryStatus;
 import com.travelhub.service.TourCategoryService;

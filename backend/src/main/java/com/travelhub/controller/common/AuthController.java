@@ -2,7 +2,7 @@ package com.travelhub.controller.common;
 
 import com.travelhub.dto.request.LoginRequest;
 import com.travelhub.dto.request.UserCreateRequest;
-import com.travelhub.dto.response.ApiResponse;
+import com.travelhub.dto.common.ApiResponse;
 import com.travelhub.dto.response.AuthResponse;
 import com.travelhub.service.AuthService;
 import jakarta.validation.Valid;

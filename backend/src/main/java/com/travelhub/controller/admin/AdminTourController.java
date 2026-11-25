@@ -1,10 +1,10 @@
 package com.travelhub.controller.admin;
 
 import com.travelhub.dto.request.TourCreateRequest;
-import com.travelhub.dto.request.TourFilterRequest;
+import com.travelhub.dto.filter.TourFilterRequest;
 import com.travelhub.dto.request.TourUpdateRequest;
-import com.travelhub.dto.response.ApiResponse;
-import com.travelhub.dto.response.PageResponse;
+import com.travelhub.dto.common.ApiResponse;
+import com.travelhub.dto.common.PageResponse;
 import com.travelhub.dto.response.TourAdminResponse;
 import com.travelhub.service.TourService;
 import jakarta.validation.Valid;

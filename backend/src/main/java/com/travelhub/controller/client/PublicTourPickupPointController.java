@@ -1,6 +1,6 @@
 package com.travelhub.controller.client;
     
-import com.travelhub.dto.response.ApiResponse;
+import com.travelhub.dto.common.ApiResponse;
 import com.travelhub.dto.response.TourPickupPointResponse;
 import com.travelhub.service.TourPickupPointService;
 import lombok.RequiredArgsConstructor;

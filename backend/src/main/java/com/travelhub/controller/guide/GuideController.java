@@ -1,6 +1,6 @@
 package com.travelhub.controller.guide;
 
-import com.travelhub.dto.response.ApiResponse;
+import com.travelhub.dto.common.ApiResponse;
 import com.travelhub.dto.response.GuideDepartureResponse;
 import com.travelhub.dto.response.GuidePassengerResponse;
 import com.travelhub.service.GuideService;

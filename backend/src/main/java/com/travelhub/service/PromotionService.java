@@ -1,10 +1,10 @@
 package com.travelhub.service;
-import com.travelhub.dto.request.PromotionFilterRequest;
+import com.travelhub.dto.filter.PromotionFilterRequest;
 import com.travelhub.dto.request.PromotionRequest;
 import com.travelhub.entity.Promotion;
 import java.util.List;
 
-import com.travelhub.dto.response.PageResponse;
+import com.travelhub.dto.common.PageResponse;
 import com.travelhub.dto.response.PromotionAdminResponse;
 public interface PromotionService {
     List<PromotionAdminResponse> getAllPromotions();

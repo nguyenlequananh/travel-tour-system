@@ -10,10 +10,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.travelhub.dto.request.NotificationSendRequest;
+import com.travelhub.dto.message.NotificationSendRequest;
 import com.travelhub.dto.request.PaymentCreateRequest;
-import com.travelhub.dto.request.PaymentFilterRequest;
-import com.travelhub.dto.response.PageResponse;
+import com.travelhub.dto.filter.PaymentFilterRequest;
+import com.travelhub.dto.common.PageResponse;
 import com.travelhub.dto.response.PaymentResponse;
 import com.travelhub.entity.Booking;
 import com.travelhub.entity.Payment;

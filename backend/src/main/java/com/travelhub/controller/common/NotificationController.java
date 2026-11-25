@@ -1,9 +1,9 @@
 package com.travelhub.controller.common;
 
-import com.travelhub.dto.request.NotificationFilterRequest;
-import com.travelhub.dto.response.ApiResponse;
+import com.travelhub.dto.filter.NotificationFilterRequest;
+import com.travelhub.dto.common.ApiResponse;
 import com.travelhub.dto.response.NotificationResponse;
-import com.travelhub.dto.response.PageResponse;
+import com.travelhub.dto.common.PageResponse;
 import com.travelhub.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

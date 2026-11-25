@@ -1,7 +1,7 @@
 package com.travelhub.controller.admin;
 
 import com.travelhub.dto.request.TourGuideRequest;
-import com.travelhub.dto.response.ApiResponse;
+import com.travelhub.dto.common.ApiResponse;
 import com.travelhub.dto.response.TourGuideResponse;
 import com.travelhub.dto.response.UserResponse;
 import com.travelhub.service.TourGuideService;

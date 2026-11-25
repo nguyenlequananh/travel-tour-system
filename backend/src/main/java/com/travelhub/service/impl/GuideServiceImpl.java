@@ -10,7 +10,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -44,11 +46,14 @@ public class GuideServiceImpl implements GuideService {
         List<TourGuide> assignments = tourGuideRepository.findAllByGuideId(guide.getId());
 
         // 4. Tổng hợp thông tin chuyến đi kèm số khách thực tế và lộ trình điểm đón
+        //    Sắp xếp: ưu tiên chuyến sắp đi (>= hôm nay, gần nhất lên đầu), chuyến đã qua xếp bên dưới (gần đây nhất lên trước)
+        LocalDate today = LocalDate.now();
+
         return assignments.stream().map(assignment -> {
             TourDeparture departure = assignment.getDeparture();
             Tour tour = departure.getTour();
 
-            // Lấy danh sách điểm đón xe của chuyến này để HDV nắm lộ trình
+            // Lấy danh sách điểm đón xe của chuyến này để HDV nắm lộ trình (đã sort theo pickupTime ASC)
             List<TourPickupPointResponse> pickupPoints = tourPickupPointRepository
                     .findAllByDepartureId(departure.getId())
                     .stream()
@@ -75,6 +80,16 @@ public class GuideServiceImpl implements GuideService {
                     .status(departure.getStatus())
                     .pickupPoints(pickupPoints)
                     .build();
+        }).sorted((a, b) -> {
+            boolean aPast = a.getDepartureDate().isBefore(today);
+            boolean bPast = b.getDepartureDate().isBefore(today);
+
+            if (aPast != bPast) {
+                return aPast ? 1 : -1;
+            }
+            return aPast
+                    ? b.getDepartureDate().compareTo(a.getDepartureDate())
+                    : a.getDepartureDate().compareTo(b.getDepartureDate());
         }).toList();
     }
 
@@ -133,6 +148,17 @@ public class GuideServiceImpl implements GuideService {
                 passengerManifest.add(item);
             }
         }
+
+        // 6. Sắp xếp theo giờ đón tăng dần (tự túc xuống cuối), cùng giờ thì gom theo mã đơn
+        passengerManifest.sort(
+                Comparator.comparing(
+                        GuidePassengerResponse::getPickupTime,
+                        Comparator.nullsLast(Comparator.naturalOrder())
+                ).thenComparing(
+                        GuidePassengerResponse::getBookingCode,
+                        Comparator.nullsLast(Comparator.naturalOrder())
+                )
+        );
 
         return passengerManifest;
     }

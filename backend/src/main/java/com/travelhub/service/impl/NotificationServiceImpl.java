@@ -9,10 +9,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
-import com.travelhub.dto.request.NotificationFilterRequest;
-import com.travelhub.dto.request.NotificationSendRequest;
+import com.travelhub.dto.filter.NotificationFilterRequest;
+import com.travelhub.dto.message.NotificationSendRequest;
 import com.travelhub.dto.response.NotificationResponse;
-import com.travelhub.dto.response.PageResponse;
+import com.travelhub.dto.common.PageResponse;
 import com.travelhub.entity.Notification;
 import com.travelhub.entity.User;
 import com.travelhub.repository.NotificationRepository;

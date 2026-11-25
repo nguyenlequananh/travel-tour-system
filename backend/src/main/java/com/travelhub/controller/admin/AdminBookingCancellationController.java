@@ -1,10 +1,10 @@
 package com.travelhub.controller.admin;
 
-import com.travelhub.dto.request.CancellationFilterRequest;
+import com.travelhub.dto.filter.CancellationFilterRequest;
 import com.travelhub.dto.request.CancellationRequest;
-import com.travelhub.dto.response.ApiResponse;
+import com.travelhub.dto.common.ApiResponse;
 import com.travelhub.dto.response.CancellationResponse;
-import com.travelhub.dto.response.PageResponse;
+import com.travelhub.dto.common.PageResponse;
 import com.travelhub.service.BookingCancellationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

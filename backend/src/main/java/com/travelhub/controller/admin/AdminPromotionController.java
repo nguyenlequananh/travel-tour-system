@@ -1,9 +1,9 @@
 package com.travelhub.controller.admin;
 
-import com.travelhub.dto.request.PromotionFilterRequest;
+import com.travelhub.dto.filter.PromotionFilterRequest;
 import com.travelhub.dto.request.PromotionRequest;
-import com.travelhub.dto.response.ApiResponse;
-import com.travelhub.dto.response.PageResponse;
+import com.travelhub.dto.common.ApiResponse;
+import com.travelhub.dto.common.PageResponse;
 import com.travelhub.dto.response.PromotionAdminResponse;
 import com.travelhub.service.PromotionService;
 import jakarta.validation.Valid;

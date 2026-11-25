@@ -2,7 +2,7 @@ package com.travelhub.controller.admin;
 
 import com.travelhub.dto.request.TourDepartureCreateRequest;
 import com.travelhub.dto.request.TourDepartureUpdateRequest;
-import com.travelhub.dto.response.ApiResponse;
+import com.travelhub.dto.common.ApiResponse;
 import com.travelhub.dto.response.TourDepartureResponse;
 import com.travelhub.enums.DepartureStatus;
 import com.travelhub.service.TourDepartureService;

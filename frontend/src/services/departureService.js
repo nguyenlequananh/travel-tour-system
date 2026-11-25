@@ -46,6 +46,20 @@ const departureService = {
   deletePickupPoint: (id) => {
     return axiosClient.delete(`/admin/pickup-points/${id}`);
   },
+
+  // 8. Spring Batch Import CSV đợt khởi hành hàng loạt
+  downloadBatchTemplate: () => {
+    return axiosClient.get('/admin/batch/departures/template', {
+      responseType: 'blob',
+    });
+  },
+  importDeparturesBatch: (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return axiosClient.post('/admin/batch/departures/import', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
 };
 
 export default departureService;

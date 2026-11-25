@@ -2,7 +2,7 @@ package com.travelhub.controller.client;
 
 import com.travelhub.dto.request.BookingCreateRequest;
 import com.travelhub.dto.request.CancellationRequest;
-import com.travelhub.dto.response.ApiResponse;
+import com.travelhub.dto.common.ApiResponse;
 import com.travelhub.dto.response.BookingResponse;
 import com.travelhub.dto.response.CancellationResponse;
 import com.travelhub.service.BookingCancellationService;

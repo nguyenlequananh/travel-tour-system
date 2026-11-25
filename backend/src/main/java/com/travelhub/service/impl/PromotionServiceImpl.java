@@ -1,5 +1,5 @@
 package com.travelhub.service.impl;
-import com.travelhub.dto.request.PromotionFilterRequest;
+import com.travelhub.dto.filter.PromotionFilterRequest;
 import com.travelhub.dto.request.PromotionRequest;
 import com.travelhub.entity.Promotion;
 import com.travelhub.repository.PromotionRepository;
@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 
-import com.travelhub.dto.response.PageResponse;
+import com.travelhub.dto.common.PageResponse;
 import com.travelhub.dto.response.PromotionAdminResponse;
 @RequiredArgsConstructor
 @Service

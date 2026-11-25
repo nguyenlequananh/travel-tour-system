@@ -17,7 +17,10 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
    
     
     Optional<Booking> findBookingByBookingCode(String bookingCode);
-    List<Booking> findAllByUserId(Long userId);
+
+    // Lấy danh sách vé của 1 khách hàng, sắp xếp mới đặt nhất lên đầu (createdAt ánh xạ cột booking_date)
+    @Query("SELECT b FROM Booking b WHERE b.user.id = :userId ORDER BY b.createdAt DESC, b.id DESC")
+    List<Booking> findAllByUserId(@Param("userId") Long userId);
      // 1. Tính tổng doanh thu thực tế (chỉ tính đơn PAID)
     @Query("SELECT COALESCE(SUM(b.totalAmount), 0) FROM Booking b WHERE b.paymentStatus = 'PAID'")
     BigDecimal calculateTotalRevenue();

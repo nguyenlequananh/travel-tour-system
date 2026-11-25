@@ -9,7 +9,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Optional;
+
 public interface TourRepository extends JpaRepository<Tour, Long> {
+    Optional<Tour> findByTourCode(String tourCode);
     boolean existsByTourCode(String tourCode);
     boolean existsByTourCodeAndIdNot(String tourCode, Long id);
     Long countByStatus(TourStatus status);

@@ -1,7 +1,7 @@
 package com.travelhub.controller.client;
 
 import com.travelhub.dto.request.ReviewRequest;
-import com.travelhub.dto.response.ApiResponse;
+import com.travelhub.dto.common.ApiResponse;
 import com.travelhub.dto.response.ReviewResponse;
 import com.travelhub.service.ReviewService;
 import jakarta.validation.Valid;

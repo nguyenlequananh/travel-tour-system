@@ -868,34 +868,39 @@ const TourDetailPage = () => {
           <Divider style={{ margin: '14px 0' }} />
 
           <h4 style={{ color: '#0d6e6e', fontWeight: 700, marginBottom: 12 }}>
-            <CompassOutlined style={{ marginRight: 6 }} /> 2. Chọn điểm đón khách
+            <CompassOutlined style={{ marginRight: 6 }} /> 2. Điểm đón khách{' '}
+            <span style={{ color: '#64748b', fontWeight: 400, fontSize: 13 }}>(Không bắt buộc)</span>
           </h4>
           <Form.Item
             name="pickupPointId"
             label={
               <span>
-                Điểm tập trung / Đón khách{' '}
+                Điểm tập trung / Đón xe dọc đường{' '}
                 {pickupPoints.length === 0 && (
                   <span style={{ color: '#64748b', fontWeight: 'normal' }}>(Chuyến này không có điểm đón dọc đường)</span>
                 )}
               </span>
             }
-            rules={[{ required: pickupPoints.length > 0, message: 'Vui lòng chọn điểm đón của bạn!' }]}
+            extra="Bỏ trống hoặc chọn 'Tự túc' nếu bạn tự di chuyển đến sân bay, bến xe hoặc điểm tập trung."
           >
             <Select
               placeholder={
                 pickupPoints.length > 0
-                  ? '-- Chọn điểm đón xe dọc đường --'
-                  : '-- Tập trung trực tiếp tại điểm hẹn / sân bay --'
+                  ? '🚶 Tự túc tập trung (hoặc bấm để chọn điểm đón xe dọc đường)'
+                  : '🚶 Tự túc / Tập trung trực tiếp tại điểm khởi hành (sân bay, bến xe)'
               }
               loading={loadingPickupPoints}
               allowClear
               disabled={pickupPoints.length === 0}
               notFoundContent={loadingPickupPoints ? <Spin size="small" /> : 'Chưa có danh sách điểm đón cụ thể'}
             >
+              <Select.Option value="">
+                🚶 <b>Tự túc / Tập trung trực tiếp tại điểm khởi hành</b> (sân bay, bến xe)
+              </Select.Option>
               {pickupPoints.map((point) => (
                 <Select.Option key={point.id} value={point.id}>
-                  📍 <b>{point.locationName}</b> {point.pickupTime ? `(Đón lúc: ${point.pickupTime})` : ''}
+                  📍 <b>{point.locationName}</b>{' '}
+                  {point.pickupTime ? `(Đón lúc: ${String(point.pickupTime).substring(0, 5)})` : ''}
                 </Select.Option>
               ))}
             </Select>

@@ -75,7 +75,7 @@ public class JwtUtils {
             System.err.println("Token không được hỗ trợ!");
         } catch (IllegalArgumentException e) {
             System.err.println("Chuỗi token bị rỗng!");
-        } catch (SecurityException e) {
+        } catch (io.jsonwebtoken.security.SecurityException e) {
             System.err.println("Chữ ký token không hợp lệ (nghi vấn bị làm giả)!");
         }
         return false;

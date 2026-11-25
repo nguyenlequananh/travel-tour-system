@@ -7,11 +7,11 @@ import lombok.RequiredArgsConstructor;
 
 import com.travelhub.config.RabbitMQConfig;
 import com.travelhub.dto.message.RefundEmailMessage;
-import com.travelhub.dto.request.CancellationFilterRequest;
+import com.travelhub.dto.filter.CancellationFilterRequest;
 import com.travelhub.dto.request.CancellationRequest;
-import com.travelhub.dto.request.NotificationSendRequest;
+import com.travelhub.dto.message.NotificationSendRequest;
 import com.travelhub.dto.response.CancellationResponse;
-import com.travelhub.dto.response.PageResponse;
+import com.travelhub.dto.common.PageResponse;
 import com.travelhub.entity.Booking;
 import com.travelhub.entity.BookingCancellation;
 import com.travelhub.entity.TourDeparture;

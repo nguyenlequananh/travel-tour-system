@@ -1,7 +1,7 @@
 package com.travelhub.service.impl;
 
 import com.travelhub.config.VnPayConfig;
-import com.travelhub.dto.request.NotificationSendRequest;
+import com.travelhub.dto.message.NotificationSendRequest;
 import com.travelhub.entity.Booking;
 import com.travelhub.entity.Payment;
 import com.travelhub.enums.BookingStatus;

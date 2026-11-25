@@ -1,8 +1,8 @@
 package com.travelhub.controller.admin;
 
-import com.travelhub.dto.request.ReviewFilterRequest;
-import com.travelhub.dto.response.ApiResponse;
-import com.travelhub.dto.response.PageResponse;
+import com.travelhub.dto.filter.ReviewFilterRequest;
+import com.travelhub.dto.common.ApiResponse;
+import com.travelhub.dto.common.PageResponse;
 import com.travelhub.dto.response.ReviewResponse;
 import com.travelhub.service.ReviewService;
 import lombok.RequiredArgsConstructor;

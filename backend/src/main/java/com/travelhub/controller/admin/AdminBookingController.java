@@ -1,10 +1,10 @@
 package com.travelhub.controller.admin;
 
 import com.travelhub.dto.request.BookingCreateRequest;
-import com.travelhub.dto.request.BookingFilterRequest;
-import com.travelhub.dto.response.ApiResponse;
+import com.travelhub.dto.filter.BookingFilterRequest;
+import com.travelhub.dto.common.ApiResponse;
 import com.travelhub.dto.response.BookingResponse;
-import com.travelhub.dto.response.PageResponse;
+import com.travelhub.dto.common.PageResponse;
 import com.travelhub.enums.BookingStatus;
 import com.travelhub.enums.PaymentStatus;
 import com.travelhub.service.BookingService;

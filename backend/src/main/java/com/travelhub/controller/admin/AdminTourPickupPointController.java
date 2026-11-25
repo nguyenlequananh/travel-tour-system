@@ -1,7 +1,7 @@
 package com.travelhub.controller.admin;
 
 import com.travelhub.dto.request.TourPickupPointRequest;
-import com.travelhub.dto.response.ApiResponse;
+import com.travelhub.dto.common.ApiResponse;
 import com.travelhub.dto.response.TourPickupPointResponse;
 import com.travelhub.service.TourPickupPointService;
 import jakarta.validation.Valid;

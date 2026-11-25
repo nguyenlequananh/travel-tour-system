@@ -1,7 +1,7 @@
 package com.travelhub.controller.admin;
 
 import com.travelhub.dto.request.CategoryRequest;
-import com.travelhub.dto.response.ApiResponse;
+import com.travelhub.dto.common.ApiResponse;
 import com.travelhub.dto.response.TourCategoryResponse;
 import com.travelhub.service.TourCategoryService;
 import jakarta.validation.Valid;

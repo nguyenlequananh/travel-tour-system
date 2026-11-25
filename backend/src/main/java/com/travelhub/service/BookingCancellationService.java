@@ -1,9 +1,9 @@
 package com.travelhub.service;
 
-import com.travelhub.dto.request.CancellationFilterRequest;
+import com.travelhub.dto.filter.CancellationFilterRequest;
 import com.travelhub.dto.request.CancellationRequest;
 import com.travelhub.dto.response.CancellationResponse;
-import com.travelhub.dto.response.PageResponse;
+import com.travelhub.dto.common.PageResponse;
 
 import java.util.List;
 

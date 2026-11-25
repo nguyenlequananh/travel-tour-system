@@ -15,9 +15,6 @@ public class TourDepartureUpdateRequest {
     @NotNull(message = "Ngày khởi hành không được để trống")
     private LocalDate departureDate;
 
-    @NotNull(message = "Ngày kết thúc không được để trống")
-    private LocalDate returnDate;
-
     @NotNull(message = "Giá người lớn không được để trống")
     @DecimalMin(value = "0.0", inclusive = false, message = "Giá người lớn phải lớn hơn 0")
     private BigDecimal adultPrice;

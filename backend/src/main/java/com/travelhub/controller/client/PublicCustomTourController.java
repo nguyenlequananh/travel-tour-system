@@ -1,7 +1,7 @@
 package com.travelhub.controller.client;
 
 import com.travelhub.dto.request.CustomTourCreateRequest;
-import com.travelhub.dto.response.ApiResponse;
+import com.travelhub.dto.common.ApiResponse;
 import com.travelhub.dto.response.CustomTourResponse;
 import com.travelhub.service.CustomTourService;
 import jakarta.validation.Valid;

@@ -1,9 +1,9 @@
 package com.travelhub.service;
 
-import com.travelhub.dto.request.NotificationFilterRequest;
-import com.travelhub.dto.request.NotificationSendRequest; // Import DTO vừa tạo
+import com.travelhub.dto.filter.NotificationFilterRequest;
+import com.travelhub.dto.message.NotificationSendRequest; // Import DTO vừa tạo
 import com.travelhub.dto.response.NotificationResponse;
-import com.travelhub.dto.response.PageResponse;
+import com.travelhub.dto.common.PageResponse;
 
 import java.util.List;
 

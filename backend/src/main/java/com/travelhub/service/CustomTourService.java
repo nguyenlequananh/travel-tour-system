@@ -1,9 +1,9 @@
 package com.travelhub.service;
 
 import com.travelhub.dto.request.CustomTourCreateRequest;
-import com.travelhub.dto.request.CustomTourFilterRequest;
+import com.travelhub.dto.filter.CustomTourFilterRequest;
 import com.travelhub.dto.response.CustomTourResponse;
-import com.travelhub.dto.response.PageResponse;
+import com.travelhub.dto.common.PageResponse;
 import com.travelhub.enums.CustomTourStatus;
 
 import java.util.List;

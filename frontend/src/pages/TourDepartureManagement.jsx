@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import {
   Table, Button, Space, Tag, Modal, Form, InputNumber, Select,
-  DatePicker, message, Input, Card, Checkbox, Popconfirm, Divider, List, TimePicker
+  DatePicker, message, Input, Card, Checkbox, Popconfirm, Divider, List, TimePicker,
+  Upload, Alert, Statistic, Row, Col
 } from 'antd';
 import {
   PlusOutlined, EditOutlined, CalendarOutlined, SearchOutlined,
   CheckOutlined, TeamOutlined, DeleteOutlined, UserOutlined, PhoneOutlined,
-  EnvironmentOutlined, ClockCircleOutlined
+  EnvironmentOutlined, ClockCircleOutlined, UploadOutlined, DownloadOutlined,
+  InboxOutlined, CheckCircleOutlined, WarningOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import departureService from '../services/departureService';
@@ -44,6 +46,12 @@ const TourDepartureManagement = () => {
   const [pickupLoading, setPickupLoading] = useState(false);
   const [editingPickupId, setEditingPickupId] = useState(null);
   const [pickupForm] = Form.useForm();
+
+  // ================= STATE CHO MODAL SPRING BATCH IMPORT CSV =================
+  const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
+  const [batchFile, setBatchFile] = useState(null);
+  const [batchUploading, setBatchUploading] = useState(false);
+  const [batchResult, setBatchResult] = useState(null);
 
   // 1. Tải danh sách Tour cho Modal chọn
   const fetchTourListForModal = async (page = 0, size = 5, keyword = '') => {
@@ -111,13 +119,21 @@ const TourDepartureManagement = () => {
     }
   }, [selectedTour]);
 
+  // Helper tự động tính Ngày về = Ngày đi + (durationDays - 1)
+  const calculateReturnDate = (departureDate, tour = selectedTour) => {
+    if (!departureDate) return null;
+    const durationDays = tour?.durationDays ? Math.max(1, Number(tour.durationDays)) : 1;
+    return departureDate.add(durationDays - 1, 'day');
+  };
+
   // 3. Xử lý Thêm / Sửa Đợt khởi hành
   const handleOpenModal = (record = null) => {
     if (record) {
       setEditingId(record.id);
+      const depDate = dayjs(record.departureDate);
       form.setFieldsValue({
-        departureDate: dayjs(record.departureDate),
-        returnDate: dayjs(record.returnDate),
+        departureDate: depDate,
+        returnDate: calculateReturnDate(depDate, selectedTour) || dayjs(record.returnDate),
         adultPrice: record.adultPrice,
         childPrice: record.childPrice,
         singleRoomSupplement: record.singleRoomSupplement,
@@ -134,10 +150,10 @@ const TourDepartureManagement = () => {
   const handleSubmit = async (values) => {
     setSubmitting(true);
     try {
+      const { returnDate, ...restValues } = values;
       const payload = {
-        ...values,
+        ...restValues,
         departureDate: values.departureDate.format('YYYY-MM-DD'),
-        returnDate: values.returnDate.format('YYYY-MM-DD'),
       };
 
       if (editingId) {
@@ -281,6 +297,51 @@ const TourDepartureManagement = () => {
     }
   };
 
+  // ================= LOGIC SPRING BATCH IMPORT CSV =================
+  const handleOpenBatchModal = () => {
+    setBatchFile(null);
+    setBatchResult(null);
+    setIsBatchModalOpen(true);
+  };
+
+  const handleDownloadTemplate = async () => {
+    try {
+      const blob = await departureService.downloadBatchTemplate();
+      const url = window.URL.createObjectURL(new Blob([blob], { type: 'text/csv;charset=utf-8;' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'template_import_departures.csv');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      message.success('Đã tải file CSV mẫu!');
+    } catch (err) {
+      message.error(err.message || 'Không thể tải file CSV mẫu (kiểm tra API Backend đã sẵn sàng chưa)!');
+    }
+  };
+
+  const handleRunBatchImport = async () => {
+    if (!batchFile) {
+      message.warning('Vui lòng chọn file .csv trước khi chạy Spring Batch!');
+      return;
+    }
+    setBatchUploading(true);
+    setBatchResult(null);
+    try {
+      const res = await departureService.importDeparturesBatch(batchFile);
+      setBatchResult(res.data);
+      message.success(res.message || 'Chạy Spring Batch Import thành công!');
+      if (selectedTour?.id) {
+        fetchDepartures(selectedTour.id);
+      }
+    } catch (err) {
+      message.error(err.message || 'Lỗi khi chạy Spring Batch Import!');
+    } finally {
+      setBatchUploading(false);
+    }
+  };
+
   // ================= CÁC CỘT CỦA BẢNG ĐỢT KHỞI HÀNH =================
   const columns = [
     {
@@ -385,9 +446,14 @@ const TourDepartureManagement = () => {
         <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
           <CalendarOutlined style={{ color: '#0d6e6e' }} /> Quản lý Lịch Khởi Hành
         </h2>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => handleOpenModal(null)} disabled={!selectedTour}>
-          Mở Bán Đợt Mới
-        </Button>
+        <Space wrap>
+          <Button icon={<UploadOutlined />} onClick={handleOpenBatchModal}>
+            Import CSV (Spring Batch)
+          </Button>
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => handleOpenModal(null)} disabled={!selectedTour}>
+            Mở Bán Đợt Mới
+          </Button>
+        </Space>
       </div>
 
       {/* THANH HIỂN THỊ TOUR ĐANG CHỌN */}
@@ -408,9 +474,14 @@ const TourDepartureManagement = () => {
         <div>
           <span style={{ color: '#475569', marginRight: 8, fontSize: 13.5 }}>Tour đang quản lý lịch:</span>
           {selectedTour ? (
-            <strong style={{ fontSize: 15.5, color: '#0b2545' }}>
-              [{selectedTour.tourCode}] {selectedTour.name} ({selectedTour.departureCity} ➔ {selectedTour.destinationCity})
-            </strong>
+            <Space size={8} wrap>
+              <strong style={{ fontSize: 15.5, color: '#0b2545' }}>
+                [{selectedTour.tourCode}] {selectedTour.name} ({selectedTour.departureCity} ➔ {selectedTour.destinationCity})
+              </strong>
+              <Tag color="cyan">
+                {selectedTour.durationDays || 1}N{selectedTour.durationNights ?? 0}Đ
+              </Tag>
+            </Space>
           ) : (
             <span style={{ color: '#dc2626', fontWeight: 600 }}>Chưa chọn tour nào</span>
           )}
@@ -494,10 +565,23 @@ const TourDepartureManagement = () => {
         <Form form={form} layout="vertical" onFinish={handleSubmit}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <Form.Item name="departureDate" label="Ngày đi" rules={[{ required: true, message: 'Chọn ngày đi!' }]}>
-              <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
+              <DatePicker
+                style={{ width: '100%' }}
+                format="DD/MM/YYYY"
+                disabledDate={(current) => current && current < dayjs().startOf('day')}
+                onChange={(date) => form.setFieldValue('returnDate', calculateReturnDate(date, selectedTour))}
+              />
             </Form.Item>
-            <Form.Item name="returnDate" label="Ngày về" rules={[{ required: true, message: 'Chọn ngày về!' }]}>
-              <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
+            <Form.Item
+              name="returnDate"
+              label={`Ngày về (Tự động: ${selectedTour?.durationDays || 1}N${selectedTour?.durationNights ?? 0}Đ)`}
+            >
+              <DatePicker
+                style={{ width: '100%' }}
+                format="DD/MM/YYYY"
+                disabled
+                placeholder="Tự động tính theo ngày đi"
+              />
             </Form.Item>
           </div>
 
@@ -766,6 +850,137 @@ const TourDepartureManagement = () => {
                 },
               ]}
             />
+          </div>
+        )}
+      </Modal>
+
+      {/* ================= 5. MODAL SPRING BATCH IMPORT CSV ĐỢT KHỞI HÀNH ================= */}
+      <Modal
+        title={
+          <Space>
+            <UploadOutlined style={{ color: '#0d6e6e' }} />
+            <span>Import Đợt Khởi Hành Hàng Loạt (Spring Batch)</span>
+          </Space>
+        }
+        open={isBatchModalOpen}
+        onCancel={() => setIsBatchModalOpen(false)}
+        width={680}
+        footer={[
+          <Button key="close" onClick={() => setIsBatchModalOpen(false)}>
+            Đóng
+          </Button>,
+          <Button
+            key="run"
+            type="primary"
+            icon={<UploadOutlined />}
+            loading={batchUploading}
+            disabled={!batchFile}
+            onClick={handleRunBatchImport}
+          >
+            Chạy Spring Batch Job
+          </Button>,
+        ]}
+        destroyOnClose
+      >
+        <Alert
+          type="info"
+          showIcon
+          style={{ marginBottom: 16 }}
+          message="Định dạng file CSV chuẩn (6 cột — Ngày về do Backend tự tính theo thời lượng Tour)"
+          description={
+            <div style={{ fontSize: 13 }}>
+              <div>
+                Cột bắt buộc: <code>tourCode,departureDate,adultPrice,childPrice,singleRoomSupplement,maxSeats</code>
+              </div>
+              <div style={{ marginTop: 4, color: '#475569' }}>
+                Định dạng ngày: <code>YYYY-MM-DD</code> (VD: <code>2026-12-20</code>). Dòng dữ liệu sai sẽ được Spring Batch tự động bỏ qua (Skip) mà không làm gián đoạn các dòng hợp lệ.
+              </div>
+              <Button
+                size="small"
+                icon={<DownloadOutlined />}
+                style={{ marginTop: 8 }}
+                onClick={handleDownloadTemplate}
+              >
+                Tải file CSV mẫu
+              </Button>
+            </div>
+          }
+        />
+
+        <Upload.Dragger
+          accept=".csv"
+          maxCount={1}
+          beforeUpload={(file) => {
+            setBatchFile(file);
+            setBatchResult(null);
+            return false; // Ngăn AntD tự upload, chỉ upload khi bấm nút Chạy Job
+          }}
+          onRemove={() => {
+            setBatchFile(null);
+            setBatchResult(null);
+          }}
+          fileList={batchFile ? [batchFile] : []}
+        >
+          <p className="ant-upload-drag-icon">
+            <InboxOutlined style={{ color: '#0d6e6e' }} />
+          </p>
+          <p className="ant-upload-text">Nhấn hoặc kéo thả file <b>.csv</b> vào đây</p>
+          <p className="ant-upload-hint">Hỗ trợ nhập hàng loạt nhiều đợt khởi hành cho nhiều Tour cùng lúc</p>
+        </Upload.Dragger>
+
+        {batchResult && (
+          <div style={{ marginTop: 18 }}>
+            <Divider style={{ margin: '12px 0' }}>
+              <Space>
+                <CheckCircleOutlined style={{ color: '#16a34a' }} />
+                <span>Kết quả thực thi Job #{batchResult.jobExecutionId}</span>
+                <Tag color={batchResult.batchStatus === 'COMPLETED' ? 'green' : 'orange'}>
+                  {batchResult.batchStatus}
+                </Tag>
+              </Space>
+            </Divider>
+
+            <Row gutter={12} style={{ marginBottom: 12 }}>
+              <Col span={8}>
+                <Card size="small">
+                  <Statistic title="Tổng dòng đọc" value={batchResult.totalRead ?? 0} />
+                </Card>
+              </Col>
+              <Col span={8}>
+                <Card size="small">
+                  <Statistic
+                    title="Nạp thành công"
+                    value={batchResult.totalInserted ?? 0}
+                    valueStyle={{ color: '#16a34a' }}
+                  />
+                </Card>
+              </Col>
+              <Col span={8}>
+                <Card size="small">
+                  <Statistic
+                    title="Bỏ qua lỗi (Skip)"
+                    value={batchResult.totalSkipped ?? 0}
+                    valueStyle={{ color: batchResult.totalSkipped > 0 ? '#dc2626' : '#64748b' }}
+                  />
+                </Card>
+              </Col>
+            </Row>
+
+            {batchResult.errors?.length > 0 && (
+              <Alert
+                type="warning"
+                showIcon
+                icon={<WarningOutlined />}
+                message={`Chi tiết ${batchResult.errors.length} dòng bị bỏ qua (Skip Policy):`}
+                description={
+                  <ul style={{ margin: '4px 0 0', paddingLeft: 18, maxHeight: 160, overflowY: 'auto' }}>
+                    {batchResult.errors.map((errMsg, idx) => (
+                      <li key={idx} style={{ fontSize: 12.5 }}>{errMsg}</li>
+                    ))}
+                  </ul>
+                }
+              />
+            )}
           </div>
         )}
       </Modal>

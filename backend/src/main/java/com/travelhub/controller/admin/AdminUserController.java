@@ -1,7 +1,7 @@
 package com.travelhub.controller.admin;
 
-import com.travelhub.dto.response.ApiResponse;
-import com.travelhub.dto.response.PageResponse;
+import com.travelhub.dto.common.ApiResponse;
+import com.travelhub.dto.common.PageResponse;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +12,7 @@ import java.util.List;
 import com.travelhub.service.UserService;
 import com.travelhub.dto.response.UserResponse;
 import com.travelhub.dto.request.UserCreateRequest;
-import com.travelhub.dto.request.UserFilterRequest;
+import com.travelhub.dto.filter.UserFilterRequest;
 import com.travelhub.dto.request.UserRoleUpdateRequest;
 import com.travelhub.dto.request.UserUpdateRequest;
 

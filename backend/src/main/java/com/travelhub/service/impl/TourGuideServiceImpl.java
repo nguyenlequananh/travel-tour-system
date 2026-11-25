@@ -1,6 +1,6 @@
 package com.travelhub.service.impl;
 
-import com.travelhub.dto.request.NotificationSendRequest;
+import com.travelhub.dto.message.NotificationSendRequest;
 import com.travelhub.dto.request.TourGuideRequest;
 import com.travelhub.dto.response.TourGuideResponse;
 import com.travelhub.dto.response.UserResponse;

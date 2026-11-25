@@ -9,10 +9,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.travelhub.dto.request.CustomTourCreateRequest;
-import com.travelhub.dto.request.CustomTourFilterRequest;
-import com.travelhub.dto.request.NotificationSendRequest;
+import com.travelhub.dto.filter.CustomTourFilterRequest;
+import com.travelhub.dto.message.NotificationSendRequest;
 import com.travelhub.dto.response.CustomTourResponse;
-import com.travelhub.dto.response.PageResponse;
+import com.travelhub.dto.common.PageResponse;
 import com.travelhub.entity.CustomTourRequest;
 import com.travelhub.enums.CustomTourStatus;
 import com.travelhub.enums.NotificationType;

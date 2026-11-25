@@ -1,8 +1,8 @@
 package com.travelhub.service.impl;
 
-import com.travelhub.dto.request.ReviewFilterRequest;
+import com.travelhub.dto.filter.ReviewFilterRequest;
 import com.travelhub.dto.request.ReviewRequest;
-import com.travelhub.dto.response.PageResponse;
+import com.travelhub.dto.common.PageResponse;
 import com.travelhub.dto.response.ReviewResponse;
 import com.travelhub.entity.Review;
 import com.travelhub.entity.Tour;

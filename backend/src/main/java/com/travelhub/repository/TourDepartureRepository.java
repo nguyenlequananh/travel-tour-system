@@ -14,7 +14,9 @@ import java.util.Optional;
 @Repository
 public interface TourDepartureRepository extends JpaRepository<TourDeparture, Long> {
 
-    List<TourDeparture> findAllByTourId(Long tourId);
+    // Sắp xếp các đợt khởi hành theo ngày đi từ gần nhất -> xa nhất
+    @Query("SELECT d FROM TourDeparture d WHERE d.tour.id = :tourId ORDER BY d.departureDate ASC, d.id ASC")
+    List<TourDeparture> findAllByTourId(@Param("tourId") Long tourId);
 
     // SỬA: SELECT d FROM TourDeparture d (Khóa đúng chuyến đi để trừ số ghế)
     @Lock(LockModeType.PESSIMISTIC_WRITE)

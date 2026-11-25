@@ -1,9 +1,9 @@
 package com.travelhub.service.impl;
 
 import com.travelhub.dto.request.TourCreateRequest;
-import com.travelhub.dto.request.TourFilterRequest;
+import com.travelhub.dto.filter.TourFilterRequest;
 import com.travelhub.dto.request.TourUpdateRequest;
-import com.travelhub.dto.response.PageResponse;
+import com.travelhub.dto.common.PageResponse;
 import com.travelhub.dto.response.TourAdminResponse;
 import com.travelhub.dto.response.TourDepartureResponse;
 import com.travelhub.dto.response.TourDetailResponse;
