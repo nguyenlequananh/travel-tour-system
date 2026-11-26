@@ -16,6 +16,7 @@ import {
   GlobalOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  MailOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -38,6 +39,7 @@ const ROUTE_TITLES = {
   '/admin/custom-tours': { group: 'Đơn hàng & Tài chính', title: 'Yêu cầu tour đoàn (B2B)' },
   '/admin/users': { group: 'Người dùng & Phản hồi', title: 'Người dùng & Phân quyền' },
   '/admin/reviews': { group: 'Người dùng & Phản hồi', title: 'Đánh giá từ khách hàng' },
+  '/admin/email-logs': { group: 'Người dùng & Phản hồi', title: 'Nhật ký gửi Email (Notification Service)' },
 };
 
 const AdminLayout = () => {
@@ -83,6 +85,7 @@ const AdminLayout = () => {
       children: [
         { key: '/admin/users', icon: <UserOutlined />, label: 'Người Dùng' },
         { key: '/admin/reviews', icon: <StarOutlined />, label: 'Đánh Giá Tour' },
+        { key: '/admin/email-logs', icon: <MailOutlined />, label: 'Nhật Ký Email' },
       ],
     },
   ];

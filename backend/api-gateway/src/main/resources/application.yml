@@ -1,0 +1,53 @@
+server:
+  port: 8088
+
+spring:
+  application:
+    name: api-gateway
+  config:
+    import: optional:file:../.env[.properties],optional:file:../../.env[.properties]
+  cloud:
+    gateway:
+      server:
+        webflux:
+          # Loại bỏ header CORS bị trùng khi cả Gateway và core-service đều trả CORS
+          default-filters:
+            - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin, RETAIN_UNIQUE
+          # Cấu hình CORS tập trung cho toàn bộ các service đứng sau Gateway (bao gồm notification-service)
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowedOriginPatterns:
+                  - "http://localhost:*"
+                  - "http://127.0.0.1:*"
+                allowedMethods: "*"
+                allowedHeaders: "*"
+                allowCredentials: true
+          # Bảng định tuyến (Route) — đặt tuyến cụ thể TRƯỚC tuyến tổng quát!
+          routes:
+            # 1. Mọi request xem lịch sử email -> chuyển sang notification-service (Port 8082)
+            - id: notification-service
+              uri: lb://NOTIFICATION-SERVICE
+              predicates:
+                - Path=/api/v1/email-logs/**
+
+            # 2. Toàn bộ API nghiệp vụ, Google OAuth2, WebSocket chuông, Swagger -> chuyển sang core-service (Port 8081)
+            - id: core-service
+              uri: lb://CORE-SERVICE
+              predicates:
+                - Path=/api/v1/**, /oauth2/**, /login/oauth2/**, /ws/**, /v3/api-docs/**, /swagger-ui/**, /swagger-ui.html
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+jwt:
+  secret: ${JWT_SECRET}
+
+logging:
+  level:
+    root: INFO
+    org.springframework.cloud.gateway: INFO

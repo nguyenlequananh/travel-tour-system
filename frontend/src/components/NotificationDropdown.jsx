@@ -94,7 +94,7 @@ const NotificationDropdown = ({ userId: propUserId, isAdmin: propIsAdmin }) => {
 
     try {
       const wsUrl = import.meta.env.VITE_WS_URL || (
-        window.location.hostname === 'localhost' ? 'http://localhost:8081/ws' : '/ws'
+        window.location.hostname === 'localhost' ? 'http://localhost:8088/ws' : '/ws'
       );
       const socket = new SockJS(wsUrl);
       client = over(socket);

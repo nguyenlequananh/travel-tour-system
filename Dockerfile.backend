@@ -1,4 +1,4 @@
-# ================= STAGE 1: BUILD SPRING BOOT VỚI MAVEN =================
+# ================= STAGE 1: BUILD SPRING BOOT VỚI MAVEN (DÙNG CHUNG CHO 4 MICROSERVICES) =================
 FROM maven:3.9-eclipse-temurin-17-alpine AS build
 WORKDIR /app
 
@@ -20,10 +20,10 @@ RUN apk add --no-cache tzdata && \
     cp /usr/share/zoneinfo/$TZ /etc/localtime && \
     echo $TZ > /etc/timezone
 
+# Cho phép tùy chỉnh giới hạn RAM riêng cho từng Microservice qua docker-compose.yml
+ENV JAVA_OPTS="-Xmx512m -Xms128m"
+
 # Copy file .jar đã đóng gói từ Stage 1
 COPY --from=build /app/target/*.jar app.jar
 
-EXPOSE 8081
-
-# Tối ưu hóa bộ nhớ RAM cho máy chủ Cloud VPS (Dành tối đa 600MB cho Spring Boot)
-ENTRYPOINT ["java", "-Xmx600m", "-Xms256m", "-jar", "app.jar"]
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

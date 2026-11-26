@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # ================= 1. CƠ SỞ DỮ LIỆU MARIADB =================
   travelhub-db:
@@ -26,39 +24,105 @@ services:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
     ports:
-      - "5672:5672"     # Cổng giao tiếp AMQP cho Backend
-      - "15672:15672"   # Cổng quản trị Dashboard trực quan
+      - "5672:5672"     # Cổng AMQP cho Producer (core-service) & Consumer (notification-service)
+      - "15672:15672"   # Dashboard quản trị RabbitMQ
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     networks:
       - travelhub-network
 
-  # ================= 3. BACKEND SPRING BOOT API =================
-  travelhub-backend:
+  # ================= 3. SERVICE DISCOVERY — EUREKA SERVER (:8761) =================
+  travelhub-eureka:
     build:
-      context: ./backend
-      dockerfile: ../Dockerfile.backend
-    container_name: travelhub-backend
+      context: ./backend/eureka-server
+      dockerfile: ../../Dockerfile.backend
+    container_name: travelhub-eureka
+    restart: always
+    environment:
+      JAVA_OPTS: "-Xmx256m -Xms128m"
+    ports:
+      - "8761:8761"
+    networks:
+      - travelhub-network
+
+  # ================= 4. CORE SERVICE (:8081 — DB: travel_enterprise_db) =================
+  travelhub-core-service:
+    build:
+      context: ./backend/core-service
+      dockerfile: ../../Dockerfile.backend
+    container_name: travelhub-core-service
     restart: always
     depends_on:
       - travelhub-db
       - travelhub-rabbitmq
+      - travelhub-eureka
     env_file:
       - .env
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://travelhub-db:3306/travel_enterprise_db?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
+      JAVA_OPTS: "-Xmx512m -Xms256m"
+      SPRING_DATASOURCE_URL: jdbc:mysql://travelhub-db:3306/travel_enterprise_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: rootpassword
       SPRING_RABBITMQ_HOST: travelhub-rabbitmq
       SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: guest
       SPRING_RABBITMQ_PASSWORD: guest
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://travelhub-eureka:8761/eureka/
     ports:
       - "8081:8081"
     networks:
       - travelhub-network
 
-  # ================= 4. FRONTEND REACT (PHỤC VỤ QUA NGINX) =================
+  # ================= 5. NOTIFICATION SERVICE (:8082 — DB RIÊNG: travel_notification_db) =================
+  travelhub-notification-service:
+    build:
+      context: ./backend/notification-service
+      dockerfile: ../../Dockerfile.backend
+    container_name: travelhub-notification-service
+    restart: always
+    depends_on:
+      - travelhub-db
+      - travelhub-rabbitmq
+      - travelhub-eureka
+    env_file:
+      - .env
+    environment:
+      JAVA_OPTS: "-Xmx384m -Xms128m"
+      NOTIFICATION_DATASOURCE_URL: jdbc:mysql://travelhub-db:3306/travel_notification_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: rootpassword
+      SPRING_RABBITMQ_HOST: travelhub-rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://travelhub-eureka:8761/eureka/
+    ports:
+      - "8082:8082"
+    networks:
+      - travelhub-network
+
+  # ================= 6. API GATEWAY (:8088 — SPRING WEBFLUX / NETTY) =================
+  travelhub-api-gateway:
+    build:
+      context: ./backend/api-gateway
+      dockerfile: ../../Dockerfile.backend
+    container_name: travelhub-api-gateway
+    restart: always
+    depends_on:
+      - travelhub-eureka
+      - travelhub-core-service
+      - travelhub-notification-service
+    env_file:
+      - .env
+    environment:
+      JAVA_OPTS: "-Xmx256m -Xms128m"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://travelhub-eureka:8761/eureka/
+    ports:
+      - "8088:8088"
+    networks:
+      - travelhub-network
+
+  # ================= 7. FRONTEND REACT (PHỤC VỤ QUA NGINX -> API GATEWAY :8088) =================
   travelhub-frontend:
     build:
       context: ./frontend
@@ -66,9 +130,9 @@ services:
     container_name: travelhub-frontend
     restart: always
     depends_on:
-      - travelhub-backend
+      - travelhub-api-gateway
     ports:
-      - "80:80"        # Cổng Web chuẩn cho người dùng Internet truy cập
+      - "80:80"
     networks:
       - travelhub-network
 

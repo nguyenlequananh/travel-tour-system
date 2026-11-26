@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (
-  window.location.hostname === 'localhost' ? 'http://localhost:8081/api/v1' : '/api/v1'
+  window.location.hostname === 'localhost' ? 'http://localhost:8088/api/v1' : '/api/v1'
 );
 
 const downloadFile = async (endpoint, defaultFilename) => {

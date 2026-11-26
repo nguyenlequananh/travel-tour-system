@@ -36,6 +36,7 @@ import PaymentManagement from './pages/PaymentManagement';
 import UserManagement from './pages/UserManagement';
 import ReviewManagement from './pages/ReviewManagement';
 import CustomTourManagement from './pages/CustomTourManagement';
+import EmailLogManagement from './pages/EmailLogManagement';
 
 const travelHubTheme = {
   token: {
@@ -111,6 +112,7 @@ function App() {
               <Route path="users" element={<UserManagement />} />
               <Route path="reviews" element={<ReviewManagement />} />
               <Route path="custom-tours" element={<CustomTourManagement />} />
+              <Route path="email-logs" element={<EmailLogManagement />} />
             </Route>
           </Route>
           </Routes>
